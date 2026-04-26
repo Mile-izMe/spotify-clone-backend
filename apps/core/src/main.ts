@@ -17,9 +17,10 @@ import {
 // import {
 //     setupCookie
 // } from "@modules/cookie"
-// import {
-//     setupSwagger
-// } from "@modules/docs"
+import {
+    setupSwagger,
+    SwaggerAuthenticationType
+} from "@modules/docs"
 // import {
 //     RedisIoAdapter 
 // } from "@modules/socketio"
@@ -28,19 +29,16 @@ import {
 //     RedisClient,
 //     RedisInstanceKey
 // } from "@modules/native"
-// import {
-//     ContextLoggerService 
-// } from "@modules/logger"
-// import {
-//     SwaggerAuthenticationType
-// } from "@modules/docs"
+import {
+    ContextLoggerService
+} from "@modules/logger"
 
 const bootstrap = async () => {
     const app = await NestFactory.create(
         AppModule,
-        // {
-        //     logger: new ContextLoggerService(),
-        // }
+        {
+            logger: new ContextLoggerService(),
+        }
     )
     // set the app to the globalThis object
     globalThis.__APP__ = app
