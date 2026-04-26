@@ -1,0 +1,469 @@
+import {
+    join
+} from "path"
+import {
+    parseEnvBoolean,
+    parseEnvFloat,
+    parseEnvInt,
+    parseEnvMs,
+    parseEnvString
+} from "./utils"
+
+/**
+ * Builds the application config from environment variables.
+ * Each value is read via a parseEnv* helper (env var name + default).
+ * Called at runtime; defaults apply when the corresponding env var is unset.
+ */
+export const envConfig = () => ({
+    /** True when NODE_ENV === "production". */
+    isProduction: parseEnvString(
+        {
+            key: "NODE_ENV",
+            defaultValue: "development",
+        }
+    ) === "production",
+    /** Services configuration. */
+    services: {
+        core: {
+            port: parseEnvInt({
+                key: "CORE_PORT",
+                defaultValue: 3001,
+            }),
+        },
+        /** API service configuration. */
+        api: {
+            /** Transaction configuration. */
+            transaction: {
+                timeSinceCreationMs: parseEnvMs({
+                    key: "API_TRANSACTION_TIME_SINCE_CREATION_MS",
+                    defaultValue: "15m",
+                }),
+            },
+            /** API port configuration. */
+            port: parseEnvInt({
+                key: "API_PORT",
+                defaultValue: 3001,
+            }),
+            /** API pagination configuration. */
+            pagination: {
+                page: {
+                    limit: parseEnvInt({
+                        key: "API_PAGINATION_PAGE_LIMIT",
+                        defaultValue: 20,
+                    }),
+                    pageNumber: parseEnvInt({
+                        key: "API_PAGINATION_PAGE_NUMBER",
+                        defaultValue: 1,
+                    }),
+                },
+                cursor: {
+                    limit: parseEnvInt({
+                        key: "API_PAGINATION_CURSOR_LIMIT",
+                        defaultValue: 20,
+                    }),
+                    cursor: parseEnvString({
+                        key: "API_PAGINATION_CURSOR",
+                        defaultValue: "",
+                    }),
+                },
+            },
+        },
+    },
+
+    /** Redis configuration. */
+    redis: {
+        /** BullMQ Redis configuration. */
+        bullmq: {
+            host: parseEnvString({
+                key: "REDIS_BULLMQ_HOST",
+                defaultValue: "localhost",
+            }),
+            port: parseEnvInt({
+                key: "REDIS_BULLMQ_PORT",
+                defaultValue: 6379,
+            }),
+            password: parseEnvString({
+                key: "REDIS_BULLMQ_PASSWORD",
+                defaultValue: "Minh123_A",
+            }),
+            useCluster: parseEnvBoolean({
+                key: "REDIS_BULLMQ_USE_CLUSTER",
+                defaultValue: false,
+            }),
+        },
+        /** Throttler Redis configuration. */
+        throttler: {
+            host: parseEnvString({
+                key: "REDIS_THROTTLER_HOST",
+                defaultValue: "localhost",
+            }),
+            port: parseEnvInt({
+                key: "REDIS_THROTTLER_PORT",
+                defaultValue: 6379,
+            }),
+            password: parseEnvString({
+                key: "REDIS_THROTTLER_PASSWORD",
+                defaultValue: "Minh123_A",
+            }),
+            useCluster: parseEnvBoolean({
+                key: "REDIS_THROTTLER_USE_CLUSTER",
+                defaultValue: false,
+            }),
+        },
+        /** Adapter Redis configuration. */
+        adapter: {
+            host: parseEnvString({
+                key: "REDIS_ADAPTER_HOST",
+                defaultValue: "localhost",
+            }),
+            port: parseEnvInt({
+                key: "REDIS_ADAPTER_PORT",
+                defaultValue: 6379,
+            }),
+            password: parseEnvString({
+                key: "REDIS_ADAPTER_PASSWORD",
+                defaultValue: "Minh123_A",
+            }),
+            useCluster: parseEnvBoolean({
+                key: "REDIS_ADAPTER_USE_CLUSTER",
+                defaultValue: false,
+            }),
+        },
+        /** Cache Redis configuration. */
+        cache: {
+            host: parseEnvString({
+                key: "REDIS_CACHE_HOST",
+                defaultValue: "localhost",
+            }),
+            port: parseEnvInt({
+                key: "REDIS_CACHE_PORT",
+                defaultValue: 6379,
+            }),
+            password: parseEnvString({
+                key: "REDIS_CACHE_PASSWORD",
+                defaultValue: "Minh123_A",
+            }),
+            useCluster: parseEnvBoolean({
+                key: "REDIS_CACHE_USE_CLUSTER",
+                defaultValue: false,
+            }),
+        },
+    },
+    /** Wait configuration. */
+    wait: {
+        base: {
+            retries: parseEnvInt({
+                key: "WAIT_BASE_RETRIES",
+                defaultValue: 10,
+            }),
+            intervalMs: parseEnvInt({
+                key: "WAIT_BASE_INTERVAL_MS",
+                defaultValue: 1000,
+            }),
+        },
+    },
+
+    /** Mount path configuration. */
+    mountPath: {
+        /** File paths: data courses. */
+        data: {
+            courses: parseEnvString({
+                key: "DATA_COURSES_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "data",
+                    "courses"),
+            }),
+        },
+        /** File paths: app config. */
+        config: {
+            app: parseEnvString({
+                key: "CONFIG_APP_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "config",
+                    "app.json"),
+            }),
+            metadata: parseEnvString({
+                key: "CONFIG_METADATA_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "config",
+                    "metadata.json"),
+            }),
+        },
+        /** File paths: terraform secrets. */
+        terraform: {
+            githubAccessToken: parseEnvString({
+                key: "TERRAFORM_GITHUB_ACCESS_TOKEN_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "terraform",
+                    "github-access-token.key"),
+            }),
+            s3SecretAccessKey: parseEnvString({
+                key: "TERRAFORM_S3_SECRET_ACCESS_KEY_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "terraform",
+                    "s3-secret-access-key.key"),
+            }),
+            keycloakClientSecret: parseEnvString({
+                key: "TERRAFORM_KEYCLOAK_CLIENT_SECRET_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "terraform",
+                    "keycloak-client-secret.key"),
+            }),
+            payosApiKey: parseEnvString({
+                key: "TERRAFORM_PAYOS_API_KEY_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "terraform",
+                    "payos-api-key.key"),
+            }),
+            geminiApiKey: parseEnvString({
+                key: "TERRAFORM_GEMINI_API_KEY_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "terraform",
+                    "gemini-api-key.key"),
+            }),
+            openAiApiKey: parseEnvString({
+                key: "TERRAFORM_OPENAI_API_KEY_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "terraform",
+                    "openai-api-key.key"),
+            }),
+            sepayApiKey: parseEnvString({
+                key: "TERRAFORM_SEPAY_API_KEY_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "terraform",
+                    "sepay-api-key.key"),
+            }),
+            brevoSmtpPassword: parseEnvString({
+                key: "TERRAFORM_BREVO_SMTP_PASSWORD_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "terraform",
+                    "brevo-smtp-api-key.key"),
+            }),
+            gcpServiceAccountJson: parseEnvString({
+                key: "TERRAFORM_GCP_SERVICE_ACCOUNT_JSON_MOUNT_PATH",
+                defaultValue: join(process.cwd(),
+                    ".mount",
+                    "terraform",
+                    "gcp-service-account.json"),
+            }),
+        },
+    },
+    /** CORS: allowed origins (CORS_ORIGIN_1 … CORS_ORIGIN_10, empty skipped). */
+    cors: {
+        origins: Array.from({
+            length: 10
+        },
+        (_, i) =>
+            parseEnvString({
+                key: `CORS_ORIGIN_${i + 1}`,
+                defaultValue: "http://localhost:3000"
+            }),
+        ).filter((url) => url !== "")
+    },
+    /** Kubernetes configuration. */
+    k8s: {
+        global: {
+            podName: parseEnvString({
+                key: "K8S_POD_NAME",
+                defaultValue: "",
+            }),
+            namespace: parseEnvString({
+                key: "K8S_NAMESPACE",
+                defaultValue: "",
+            }),
+        },
+    },
+    /** Retry configuration. */
+    retry: {
+        base: {
+            retries: parseEnvInt({
+                key: "RETRY_BASE_RETRIES",
+                defaultValue: 10,
+            }),
+            factor: parseEnvFloat({
+                key: "RETRY_BASE_FACTOR",
+                defaultValue: 1.5,
+            }),
+            minTimeout: parseEnvInt({
+                key: "RETRY_BASE_MIN_TIMEOUT",
+                defaultValue: 1000,
+            }),
+            maxTimeout: parseEnvInt({
+                key: "RETRY_BASE_MAX_TIMEOUT",
+                defaultValue: 10000,
+            }),
+            randomize: parseEnvBoolean({
+                key: "RETRY_BASE_RANDOMIZE",
+                defaultValue: true,
+            }),
+        },
+    },
+    /** Databases configuration. */
+    databases: {
+        /** PostgreSQL configuration. */
+        postgresql: {
+            /** Primary PostgreSQL configuration. */
+            primary: {
+                url: parseEnvString({
+                    key: "POSTGRESQL_PRIMARY_URL",
+                    defaultValue: "postgresql://postgres:Minh123_A@localhost:5432/spotify?schema=public",
+                }),
+                host: parseEnvString({
+                    key: "POSTGRESQL_PRIMARY_HOST",
+                    defaultValue: "localhost",
+                }),
+                port: parseEnvInt({
+                    key: "POSTGRESQL_PRIMARY_PORT",
+                    defaultValue: 5432,
+                }),
+                username: parseEnvString({
+                    key: "POSTGRESQL_PRIMARY_USERNAME",
+                    defaultValue: "postgres",
+                }),
+                password: parseEnvString({
+                    key: "POSTGRESQL_PRIMARY_PASSWORD",
+                    defaultValue: "Minh123_A",
+                }),
+                database: parseEnvString({
+                    key: "POSTGRESQL_PRIMARY_DATABASE",
+                    defaultValue: "spotify",
+                }),
+                /**
+                 * When true, TypeORM auto-creates/updates tables from entities on startup.
+                 * Default: true in non-production (local dev); set POSTGRESQL_PRIMARY_SYNCHRONIZE=false to disable.
+                 * Production should use migrations and keep this false.
+                 */
+                synchronize: parseEnvBoolean({
+                    key: "POSTGRESQL_PRIMARY_SYNCHRONIZE",
+                    defaultValue: true,
+                }),
+            },
+        },
+    },
+    /** S3 configuration. */
+    s3: {
+        /** MinIO configuration. */
+        minio: {
+            endpoint: parseEnvString({
+                key: "S3_MINIO_ENDPOINT",
+                defaultValue: "http://localhost:9000",
+            }),
+            region: parseEnvString({
+                key: "S3_MINIO_REGION",
+                defaultValue: "us-east-1",
+            }),
+            accessKeyId: parseEnvString({
+                key: "S3_MINIO_ACCESS_KEY_ID",
+                defaultValue: "spotify",
+            }),
+            secretAccessKey: parseEnvString({
+                key: "S3_MINIO_SECRET_ACCESS_KEY",
+                defaultValue: "spotify123",
+            }),
+            bucket: parseEnvString({
+                key: "S3_MINIO_BUCKET",
+                defaultValue: "spotify",
+            }),
+            presignedUrl: {
+                expiration: parseEnvMs({
+                    key: "S3_MINIO_PRESIGNED_URL_EXPIRATION",
+                    defaultValue: "15m",
+                }),
+            },
+        },
+    },
+
+    /** Axios configuration. */
+    axios: {
+        retry: {
+            maxRetries: parseEnvInt({
+                key: "AXIOS_RETRY_MAX_RETRIES",
+                defaultValue: 3,
+            }),
+            delay: parseEnvMs({
+                key: "AXIOS_RETRY_DELAY",
+                defaultValue: "1s",
+            }),
+        },
+    },
+    /** BullMQ configuration. */
+    bullmq: {
+        concurrency: parseEnvInt({
+            key: "BULLMQ_CONCURRENCY",
+            defaultValue: 1000,
+        }),
+        lockDuration: parseEnvMs({
+            key: "BULLMQ_LOCK_DURATION",
+            defaultValue: "10s",
+        }),
+        stalledInterval: parseEnvMs({
+            key: "BULLMQ_STALLED_INTERVAL",
+            defaultValue: "10s",
+        }),
+        maxStalledCount: parseEnvInt({
+            key: "BULLMQ_MAX_STALLED_COUNT",
+            defaultValue: 1,
+        }),
+        attempts: parseEnvInt({
+            key: "BULLMQ_ATTEMPTS",
+            defaultValue: 1,
+        }),
+        delay: parseEnvMs({
+            key: "BULLMQ_DELAY",
+            defaultValue: "1s",
+        }),
+    },
+    /** Job tracking configuration. */
+    job: {
+        /** Send Mail job configuration. */
+        sendMail: {
+            maxSteps: parseEnvInt({
+                key: "JOB_SEND_MAIL_MAX_STEPS",
+                defaultValue: 1,
+            }),
+        },
+        /** Job stalled configuration. */
+        stalled: {
+            thresholdMs: parseEnvMs({
+                key: "JOB_STALLED_RETRY_THRESHOLD_MS",
+                defaultValue: "10s",
+            }),
+            intervalMs: parseEnvMs({
+                key: "JOB_STALLED_INTERVAL_MS",
+                defaultValue: "5s",
+            }),
+        },
+    },
+    /** Apollo configuration. */
+    apollo: {
+        timeout: parseEnvMs({
+            key: "APOLLO_TIMEOUT",
+            defaultValue: "10s",
+        }),
+        retry: {
+            initial: parseEnvMs({
+                key: "APOLLO_RETRY_INITIAL",
+                defaultValue: "1s",
+            }),
+            max: parseEnvMs({
+                key: "APOLLO_RETRY_MAX",
+                defaultValue: "10s",
+            }),
+            jitter: parseEnvBoolean({
+                key: "APOLLO_RETRY_JITTER",
+                defaultValue: true,
+            }),
+        },
+    }
+})

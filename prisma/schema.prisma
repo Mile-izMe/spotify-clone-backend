@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * User model representing application users. Each user can have multiple playlists.
+ */
+model User {
+  id        String     @id @default(uuid())
+  username  String     @unique
+  password  String
+  playlists Playlist[]
+  
+  createdAt DateTime   @map("created_at") @default(now())
+  createBy  String?    @map("create_by")
+  updatedAt DateTime   @map("updated_at") @default(now())
+  updateBy  String?    @map("update_by")
+
+  @@map("users")
+}
+
+/**
+ * Song model representing individual songs. 
+ * Each song can belong to multiple playlists.
+ */
+model Song {
+  id           String        @id @default(uuid())
+  title        String        
+  artist       String
+  audioUrl     String       @map("audio_url")
+  thumbnailUrl String?      @map("thumbnail_url")
+  duration     Int?         // Song duration (ms)
+  playlists    PlaylistSong[] // Many-to-Many relationship with Playlist
+
+  createdAt    DateTime   @map("created_at") @default(now())
+  createBy     String?    @map("create_by")
+  updatedAt    DateTime   @map("updated_at") @default(now())
+  updateBy     String?    @map("update_by")
+
+  @@map("songs")
+}
+
+/**
+ * Playlist model representing user-created playlists. Each playlist belongs to a single user.
+ */
+model Playlist {
+  id        String   @id @default(uuid())
+  name      String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @map("user_id")
+  songs     PlaylistSong[]
+
+  createdAt DateTime @map("created_at") @default(now())
+  createBy  String?  @map("create_by")
+  updatedAt DateTime @map("updated_at") @default(now())
+  updateBy  String?  @map("update_by")
+
+  @@map("playlists")
+}
+
+
+/**
+ * Join table for the many-to-many relationship between Playlist and Song.
+ */
+model PlaylistSong {
+  playlist   Playlist @relation(fields: [playlistId], references: [id])
+  playlistId String   @map("playlist_id")
+  song       Song     @relation(fields: [songId], references: [id])
+  songId     String   @map("song_id")
+
+  @@id([playlistId, songId])
+  @@map("playlist_songs")
+}
