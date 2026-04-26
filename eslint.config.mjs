@@ -22,6 +22,7 @@ export default defineConfig([
         'error',
         {
           ObjectExpression: 'always',
+          ObjectPattern: 'always',
           ImportDeclaration: 'always',
         },
       ],

@@ -7,7 +7,6 @@ export const {
     MODULE_OPTIONS_TOKEN: PRISMA_MODULE_OPTIONS_TOKEN,
     OPTIONS_TYPE: PRISMA_MODULE_OPTIONS_TYPE
 } = new ConfigurableModuleBuilder()
-    .setClassMethodName("forRoot")
     .setExtras(
         {
             isGlobal: false

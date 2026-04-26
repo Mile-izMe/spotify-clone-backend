@@ -5,7 +5,9 @@ import {
     SeedersOptions 
 } from "./types"
 
-export const { ConfigurableModuleClass, MODULE_OPTIONS_TOKEN, OPTIONS_TYPE } =
+export const {
+    ConfigurableModuleClass, MODULE_OPTIONS_TOKEN, OPTIONS_TYPE 
+} =
     new ConfigurableModuleBuilder<SeedersOptions>().setExtras(
         {
             isGlobal: false

@@ -15,7 +15,9 @@ import type {
  * @param params - key and defaultValue
  * @returns Parsed number
  */
-export const parseEnvInt = ({ key, defaultValue }: ParseEnvIntParams): number => {
+export const parseEnvInt = ({
+    key, defaultValue 
+}: ParseEnvIntParams): number => {
     return parseInt(process.env[key] ?? defaultValue.toString(),
         10)
 }
@@ -26,7 +28,9 @@ export const parseEnvInt = ({ key, defaultValue }: ParseEnvIntParams): number =>
  * @param params - key and defaultValue
  * @returns Parsed number
  */
-export const parseEnvFloat = ({ key, defaultValue }: ParseEnvFloatParams): number => {
+export const parseEnvFloat = ({
+    key, defaultValue 
+}: ParseEnvFloatParams): number => {
     return parseFloat(process.env[key] ?? defaultValue.toString())
 }
 
@@ -36,7 +40,9 @@ export const parseEnvFloat = ({ key, defaultValue }: ParseEnvFloatParams): numbe
  * @param params - key and defaultValue
  * @returns Parsed boolean
  */
-export const parseEnvBoolean = ({ key, defaultValue }: ParseEnvBooleanParams): boolean => {
+export const parseEnvBoolean = ({
+    key, defaultValue 
+}: ParseEnvBooleanParams): boolean => {
     const envValue = process.env[key]
     if (envValue === undefined) return defaultValue
     return envValue.trim().toLowerCase() === "true"
@@ -48,7 +54,9 @@ export const parseEnvBoolean = ({ key, defaultValue }: ParseEnvBooleanParams): b
  * @param params - key and defaultValue
  * @returns String value
  */
-export const parseEnvString = ({ key, defaultValue }: ParseEnvStringParams): string => {
+export const parseEnvString = ({
+    key, defaultValue 
+}: ParseEnvStringParams): string => {
     return process.env[key] ?? defaultValue
 }
 
@@ -58,7 +66,9 @@ export const parseEnvString = ({ key, defaultValue }: ParseEnvStringParams): str
  * @param params - key and defaultValue (ms string)
  * @returns Duration in milliseconds
  */
-export const parseEnvMs = ({ key, defaultValue }: ParseEnvMsParams): number => {
+export const parseEnvMs = ({
+    key, defaultValue 
+}: ParseEnvMsParams): number => {
     return parseInt(ms((process.env[key] ?? defaultValue) as ms.StringValue).toString(),
         10)
 }
@@ -69,7 +79,9 @@ export const parseEnvMs = ({ key, defaultValue }: ParseEnvMsParams): number => {
  * @param params - key and defaultValue (ms string)
  * @returns Duration in seconds
  */
-export const parseEnvSecond = ({ key, defaultValue }: ParseEnvSecondParams): number => {
+export const parseEnvSecond = ({
+    key, defaultValue 
+}: ParseEnvSecondParams): number => {
     const msValue = ms((process.env[key] ?? defaultValue) as ms.StringValue)
     return Math.floor(Number(msValue) / 1000)
 }
@@ -80,7 +92,9 @@ export const parseEnvSecond = ({ key, defaultValue }: ParseEnvSecondParams): num
  * @param params - key and defaultValue
  * @returns Parsed JSON value
  */
-export const parseEnvJson = <T>({ key, defaultValue }: ParseEnvJsonParams): T => {
+export const parseEnvJson = <T>({
+    key, defaultValue 
+}: ParseEnvJsonParams): T => {
     return JSON.parse(process.env[key] ?? defaultValue) as T
 }
 
