@@ -16,6 +16,9 @@ import {
 import {
     APP_PIPE 
 } from "@nestjs/core"
+import {
+    CqrsModule 
+} from "@nestjs/cqrs"
 /**
  * The main module for the application.
  */
@@ -43,7 +46,7 @@ import {
             //     }
             // ),
             // /** CQRS module. */
-            // CqrsModule.forRoot(),
+            CqrsModule.forRoot(),
             // CQRSModule.register({
             //     isGlobal: true,
             // }),
