@@ -2,6 +2,9 @@ import {
     ApiModule 
 } from "@features/api"
 import {
+    BullModule 
+} from "@modules/bull"
+import {
     CQRSModule 
 } from "@modules/cqrs"
 import {
@@ -13,6 +16,9 @@ import {
 import {
     MixinModule
 } from "@modules/mixin/mixin.module"
+import {
+    RedisInstanceKey, RedisModule 
+} from "@modules/native"
 import {
     S3Module
 } from "@modules/s3"
@@ -68,11 +74,11 @@ import {
                 }
             ),
             // /** BullMQ module. */
-            // BullModule.forRoot(
-            //     {
-            //         isGlobal: true,
-            //     }
-            // ),
+            BullModule.forRoot(
+                {
+                    isGlobal: true,
+                }
+            ),
             /** Prisma module. */
             PrismaModule.register(
                 {
@@ -85,16 +91,16 @@ import {
             //         isGlobal: true,
             //     }
             // ),
-            // /** IoRedis module. */
-            // RedisModule.register(
-            //     {
-            //         instanceKeys: [
-            //             RedisInstanceKey.Adapter,
-            //             RedisInstanceKey.Cache,
-            //         ],
-            //         isGlobal: true,
-            //     }
-            // ),
+            /** IoRedis module. */
+            RedisModule.register(
+                {
+                    instanceKeys: [
+                        RedisInstanceKey.Adapter,
+                        RedisInstanceKey.Cache,
+                    ],
+                    isGlobal: true,
+                }
+            ),
             // /** Throttler module. */
             // ThrottlerModule.register(
             //     {
@@ -152,4 +158,4 @@ import {
         ],
     }
 )
-export class AppModule { }
+export class AppModule {}
