@@ -431,7 +431,7 @@ export const envConfig = () => ({
         processMusic: {
             maxSteps: parseEnvInt({
                 key: "JOB_PROCESS_MUSIC_MAX_STEPS",
-                defaultValue: 2,
+                defaultValue: 5,
             }),
         },
         /** Send Mail job configuration. */

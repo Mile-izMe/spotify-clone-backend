@@ -30,6 +30,13 @@ import type {
 import {
     envConfig 
 } from "@modules/env/config"
+import {
+    ActionType 
+} from "@modules/databases"
+import {
+    InjectSuperJson 
+} from "@modules/mixin"
+import SuperJSON from "superjson"
 
 /**
  * Service for enqueuing a process music job.
@@ -39,6 +46,8 @@ export class EnqueueProcessMusicJobService {
     constructor(
         private readonly jobActionService: JobActionService,
         private readonly jobStalledService: JobStalledService,
+        @InjectSuperJson()
+        private readonly superJson: SuperJSON,
         @InjectQueue(bullData[BullQueueName.ProcessMusic].name)
         private readonly processMusicQueue: Queue<ProcessMusicPayload>,
     ) { }
@@ -65,29 +74,33 @@ export class EnqueueProcessMusicJobService {
             job = await this.jobStalledService.requeueJob(
                 {
                     id: jobId,
-                }
+                }   
             )
         } else {
+            const id = uuidv4()
+            const payloadBody: ProcessMusicPayload = {
+                jobId: id,
+                userId,
+                songId,
+            }
             // create a new job record
             job = await this.jobActionService.createJob({
-                id: uuidv4(),
+                id,
                 userId,
-                actionType: BullQueueName.ProcessMusic,
+                actionType: ActionType.ProcessMusic,
                 maxStep: envConfig().job.processMusic.maxSteps,
-                payload: {
-                    userId,
-                    songId,
-                },
+                payload: this.superJson.stringify(payloadBody)
             })
         }
 
         // push the job to the queue
+        const payload = this.superJson.parse(
+            job.payload as string
+        ) as ProcessMusicPayload
+        
         await this.processMusicQueue.add(
             job.id,
-            {
-                userId,
-                songId,
-            },
+            payload,
             {
                 jobId: job.id,
             }

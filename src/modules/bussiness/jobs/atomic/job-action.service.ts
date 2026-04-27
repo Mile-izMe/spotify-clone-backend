@@ -17,6 +17,10 @@ import type {
     IncreaseJobParams,
     ProcessingJobParams,
 } from "../types"
+import {
+    InjectSuperJson 
+} from "@modules/mixin"
+import SuperJSON from "superjson"
 
 /**
  * Service for job lifecycle management using Prisma.
@@ -25,8 +29,16 @@ import type {
 export class JobActionService {
     constructor(
         private readonly prisma: PrismaService,
+        @InjectSuperJson()
+        private readonly superJson: SuperJSON,
     ) {}
 
+    /**
+     * Get the job.
+     * @param id - The ID of the job.
+     * @param entityManager - The entity manager.
+     * @returns The job.
+     */
     async getJob(
         {
             id,
@@ -45,12 +57,21 @@ export class JobActionService {
         return job
     }
 
+    /**
+     * Create a job.
+     * @param queueName - The queue name.
+     * @param bullmqJobId - The BullMQ job ID.
+     * @param payload - The payload.
+     * @param maxSteps - The maximum steps.
+     * @param entityManager - The entity manager.
+     * @returns The job.
+     */
     async createJob(
         {
             id,
             actionType,
             payload,
-            maxStep = 1,
+            maxStep = 0,
             userId,
         }: CreateJobParams,
     ): Promise<Job> {
@@ -70,6 +91,13 @@ export class JobActionService {
         })
     }
 
+    /**
+     * Increase the job step.
+     * @param step - The step to increase.
+     * @param entityManager - The entity manager.
+     * @param job - The job entity.
+     * @returns The job.
+     */
     async increaseJob(
         {
             step = 1,
@@ -88,6 +116,12 @@ export class JobActionService {
         })
     }
 
+    /**
+     * Complete the job.
+     * @param entityManager - The entity manager.
+     * @param id - The ID of the job.
+     * @returns The job.
+     */
     async completeJob(
         {
             job,
@@ -106,6 +140,13 @@ export class JobActionService {
         })
     }
 
+    /**
+     * Fail the job.
+     * @param error - The error.
+     * @param entityManager - The entity manager.
+     * @param id - The ID of the job.
+     * @returns The job.
+     */
     async failJob(
         {
             error,
@@ -123,6 +164,12 @@ export class JobActionService {
         })
     }
 
+    /**
+     * Update the job status to processing.
+     * @param entityManager - The entity manager.
+     * @param job - The job entity.
+     * @returns The job.
+     */
     async processingJob(
         {
             job,

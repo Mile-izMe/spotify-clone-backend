@@ -1,4 +1,6 @@
 export interface ProcessMusicPayload {
+    /** The ID of the job. */
+    jobId: string
     /** The ID of the song to process. */
     songId: string
     /** The ID of the user. */
