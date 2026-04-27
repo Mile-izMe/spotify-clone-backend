@@ -1,4 +1,10 @@
 import {
+    ApiModule 
+} from "@features/api"
+import {
+    CQRSModule 
+} from "@modules/cqrs"
+import {
     PrismaModule
 } from "@modules/databases/prisma"
 import {
@@ -48,9 +54,9 @@ import {
             // ),
             // /** CQRS module. */
             CqrsModule.forRoot(),
-            // CQRSModule.register({
-            //     isGlobal: true,
-            // }),
+            CQRSModule.register({
+                isGlobal: true,
+            }),
             // /** Jwt module. */
             // JwtModule.register({
             //     global: true,
@@ -120,11 +126,11 @@ import {
             //     }
             // ),
             // /** Api module. */
-            // ApiModule.register(
-            //     {
-            //         isGlobal: true,
-            //     }
-            // ),
+            ApiModule.register(
+                {
+                    isGlobal: true,
+                }
+            ),
             // /** Worker module. */
             // WorkerModule.register(
             //     {
