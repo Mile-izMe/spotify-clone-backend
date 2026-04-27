@@ -6,10 +6,10 @@ import {
 } from "./process-music.module-definition"
 import {
     ProcessMusicDownloadStepService,
-    ProcessMusicAnalyzeStepService,
-    ProcessMusicTranscodeStepService,
-    ProcessMusicUploadStepService,
-    ProcessMusicFinalizeStepService,
+    // ProcessMusicAnalyzeStepService,
+    // ProcessMusicTranscodeStepService,
+    // ProcessMusicUploadStepService,
+    // ProcessMusicFinalizeStepService,
 } from "./steps"
 import {
     ProcessMusicStepMappingService,
@@ -27,10 +27,10 @@ import {
         ProcessMusicStepMappingService,
         ProcessMusicRequeueService,
         ProcessMusicDownloadStepService,
-        ProcessMusicAnalyzeStepService,
-        ProcessMusicTranscodeStepService,
-        ProcessMusicUploadStepService,
-        ProcessMusicFinalizeStepService,
+        // ProcessMusicAnalyzeStepService,
+        // ProcessMusicTranscodeStepService,
+        // ProcessMusicUploadStepService,
+        // ProcessMusicFinalizeStepService,
     ],
 })
 export class ProcessMusicModule extends ProcessMusicConfigurableModuleClass {}

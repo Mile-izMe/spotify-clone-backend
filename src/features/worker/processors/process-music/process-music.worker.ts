@@ -21,13 +21,19 @@ import {
     Processor as Worker,
     WorkerHost,
 } from "@nestjs/bullmq"
-import type {
-    Job as BullMQJob,
-} from "bullmq"
 import {
     Job as PrismaJob,
 } from "@prisma/client"
+import type {
+    Job as BullMQJob,
+} from "bullmq"
+import * as fs from "fs"
+import * as os from "os"
+import * as path from "path"
 import SuperJSON from "superjson"
+import {
+    v4 as uuidv4
+} from "uuid"
 import {
     ProcessMusicStepMappingService
 } from "./step-mapping.service"
@@ -69,6 +75,7 @@ export class ProcessMusicWorker extends WorkerHost {
         const startedAt = this.dayjsService.now()
         let payload: ProcessMusicPayload | undefined
         let job: PrismaJob | undefined
+        let tempBaseDir
         try {
             // 1. Get & Update Job Status to PROCESSING
             job = await this.jobActionService.getJob(
@@ -103,6 +110,15 @@ export class ProcessMusicWorker extends WorkerHost {
                 throw new Error(`User not found: ${payload.userId}`)
             }
 
+            // 3.5 Init temporary paths (Unique for each Job)
+            tempBaseDir = path.join(os.tmpdir(),
+                "music-processing",
+                bullmqJob.id ?? uuidv4())
+            const localTempPath = path.join(tempBaseDir,
+                "original_file") // Original file after download
+            const outputDir = path.join(tempBaseDir,
+                "hls_output") // Dir for playlist .m3u8
+
             // 4. Construct the context for the steps
             const context: JobExtendedContext<
                 ProcessMusicPayload, 
@@ -114,6 +130,8 @@ export class ProcessMusicWorker extends WorkerHost {
                 extended: {
                     song,
                     user,
+                    localTempPath,
+                    outputDir,
                 },
             }
 
@@ -159,6 +177,14 @@ export class ProcessMusicWorker extends WorkerHost {
                 },
             )
             throw error
+        } finally {
+            // Dọn dẹp thư mục tạm dù thành công hay thất bại
+            if (fs.existsSync(tempBaseDir)) {
+                fs.rmSync(tempBaseDir,
+                    {
+                        recursive: true, force: true 
+                    })
+            }
         }
     }
 }
