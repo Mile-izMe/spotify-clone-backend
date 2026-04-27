@@ -20,6 +20,11 @@ import {
     SongPresignUrlService
 } from "./mutations/song-presign-url"
 import {
+    SongSaveMetadataRequest,
+    SongSaveMetadataResponse,
+    SongSaveMetadataService,
+} from "./mutations/song-save-metadata"
+import {
     GetSongsService,
 } from "./queries/songs/songs.service"
 import {
@@ -33,6 +38,7 @@ export class SongsResolver {
     constructor(
         private readonly songsService: GetSongsService,
         private readonly songPresignUrlService: SongPresignUrlService,
+        private readonly songSaveMetadataService: SongSaveMetadataService,
     ) { }
 
     /**
@@ -92,6 +98,36 @@ export class SongsResolver {
         return {
             success: true,
             message: "Song presigned URL created successfully",
+            data,
+        }
+    }
+
+    /**
+     * Saves song metadata and the uploaded file key into database.
+     */
+    @Mutation(
+        () => SongSaveMetadataResponse,
+        {
+            name: "songSaveMetadata",
+            description: "Creates a song record from the uploaded file key and metadata.",
+        },
+    )
+    async songSaveMetadata(
+        @Args(
+            "request",
+            {
+                description: "Request containing the uploaded key and song metadata.",
+            },
+        )
+            request: SongSaveMetadataRequest,
+    ): Promise<SongSaveMetadataResponse> {
+        const data = await this.songSaveMetadataService.execute({
+            request,
+        })
+
+        return {
+            success: true,
+            message: "Song metadata saved successfully",
             data,
         }
     }

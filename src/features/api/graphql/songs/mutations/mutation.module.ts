@@ -8,6 +8,10 @@ import {
     SongPresignUrlService 
 } from "./song-presign-url"
 import {
+    SongSaveMetadataHandler,
+    SongSaveMetadataService,
+} from "./song-save-metadata"
+import {
     MutationsConfigurableModuleClass 
 } from "./mutation.module-definition"
 
@@ -20,9 +24,12 @@ import {
     providers: [
         SongPresignUrlHandler,
         SongPresignUrlService,
+        SongSaveMetadataHandler,
+        SongSaveMetadataService,
     ],
     exports: [
         SongPresignUrlService,
+        SongSaveMetadataService,
     ]
 })
 export class MutationsModule extends MutationsConfigurableModuleClass {}
