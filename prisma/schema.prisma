@@ -80,3 +80,33 @@ model PlaylistSong {
   @@id([playlistId, songId])
   @@map("playlist_songs")
 }
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+/**
+ * Job model representing background jobs for processing tasks.
+ */
+model Job {
+  id           String    @id @default(uuid())
+  actionType   String    @map("action_type")
+  status       JobStatus @default(PENDING)
+  payload      Json
+
+  // Tracking process
+  currentStep  Int       @default(0) @map("current_step")
+  maxStep      Int       @default(1) @map("max_step")
+
+  errorMessage String?   @db.Text @map("error_message")
+  userId       String    @map("user_id")
+
+  createdAt DateTime @map("created_at") @default(now())
+  updatedAt DateTime @map("updated_at") @default(now())
+
+  @@map("jobs")
+  @@index([userId])
+  @@index([status])
+}

@@ -19,6 +19,9 @@ import {
 import {
     createSuperJsonServiceProvider 
 } from "./superjson.providers"
+import {
+    DayjsService 
+} from "./dayjs.service"
 
 /**
  * Module for the Mixin service.
@@ -37,6 +40,7 @@ export class MixinModule extends MixinConfigurableModuleClass {
             ReadinessWatcherFactoryService,
             AsyncService,
             RetryService,
+            DayjsService,
             createSuperJsonServiceProvider(),
         ]
         return {

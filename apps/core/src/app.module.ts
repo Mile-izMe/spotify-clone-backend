@@ -5,6 +5,9 @@ import {
     BullModule 
 } from "@modules/bull"
 import {
+    BussinessModule 
+} from "@modules/bussiness"
+import {
     CQRSModule 
 } from "@modules/cqrs"
 import {
@@ -86,11 +89,11 @@ import {
                 }
             ),
             // /** Bussiness module. */
-            // BussinessModule.register(
-            //     {
-            //         isGlobal: true,
-            //     }
-            // ),
+            BussinessModule.register(
+                {
+                    isGlobal: true,
+                }
+            ),
             /** IoRedis module. */
             RedisModule.register(
                 {

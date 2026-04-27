@@ -427,6 +427,13 @@ export const envConfig = () => ({
     },
     /** Job tracking configuration. */
     job: {
+        /** Processing music configuration. */
+        processMusic: {
+            maxSteps: parseEnvInt({
+                key: "JOB_PROCESS_MUSIC_MAX_STEPS",
+                defaultValue: 2,
+            }),
+        },
         /** Send Mail job configuration. */
         sendMail: {
             maxSteps: parseEnvInt({
