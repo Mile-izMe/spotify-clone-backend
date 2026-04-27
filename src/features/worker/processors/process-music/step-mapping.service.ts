@@ -7,10 +7,10 @@ import {
 } from "@nestjs/common"
 import {
     ProcessMusicDownloadStepService,
-    // ProcessMusicAnalyzeCompleteStepService,
-    // ProcessMusicTranscodeCompleteStepService,
-    // ProcessMusicUploadCompleteStepService,
-    // ProcessMusicFinalizeCompleteStepService,
+    ProcessMusicAnalyzeStepService,
+    ProcessMusicTranscodeStepService,
+    ProcessMusicUploadStepService,
+    ProcessMusicFinalizeStepService,
 } from "./steps"
 import type {
     ExtendedProcessMusicContext,
@@ -23,10 +23,10 @@ import type {
 export class ProcessMusicStepMappingService {
     constructor(
         private readonly downloadStepService: ProcessMusicDownloadStepService,
-        // private readonly analyzeStepService: ProcessMusicAnalyzeCompleteStepService,
-        // private readonly transcodeStepService: ProcessMusicTranscodeCompleteStepService,
-        // private readonly uploadStepService: ProcessMusicUploadCompleteStepService,
-        // private readonly finalizeStepService: ProcessMusicFinalizeCompleteStepService,
+        private readonly analyzeStepService: ProcessMusicAnalyzeStepService,
+        private readonly transcodeStepService: ProcessMusicTranscodeStepService,
+        private readonly uploadStepService: ProcessMusicUploadStepService,
+        private readonly finalizeStepService: ProcessMusicFinalizeStepService,
     ) { }
 
     /**
@@ -49,22 +49,22 @@ export class ProcessMusicStepMappingService {
                     this.downloadStepService.stepIndex,
                     this.downloadStepService,
                 ],
-                // [
-                //     this.analyzeStepService.stepIndex,
-                //     this.analyzeStepService,
-                // ],
-                // [
-                //     this.transcodeStepService.stepIndex,
-                //     this.transcodeStepService,
-                // ],
-                // [
-                //     this.uploadStepService.stepIndex,
-                //     this.uploadStepService,
-                // ],
-                // [
-                //     this.finalizeStepService.stepIndex,
-                //     this.finalizeStepService,
-                // ],
+                [
+                    this.analyzeStepService.stepIndex,
+                    this.analyzeStepService,
+                ],
+                [
+                    this.transcodeStepService.stepIndex,
+                    this.transcodeStepService,
+                ],
+                [
+                    this.uploadStepService.stepIndex,
+                    this.uploadStepService,
+                ],
+                [
+                    this.finalizeStepService.stepIndex,
+                    this.finalizeStepService,
+                ],
             ],
         )
     }
