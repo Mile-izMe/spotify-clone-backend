@@ -18,7 +18,7 @@ import {
 } from "@modules/s3/s3-build.service"
 import {
     SongsResponseData 
-} from "../types"
+} from "./types"
 import {
     S3Provider 
 } from "@modules/s3/enums/s3"
@@ -34,7 +34,7 @@ import {
     encodeCursor,
     normalizeLimit,
     normalizePageNumber,
-} from "../../shared"
+} from "../../../shared"
 
 @QueryHandler(SongsQuery)
 @Injectable()

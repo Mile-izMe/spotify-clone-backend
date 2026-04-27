@@ -10,7 +10,7 @@ import {
 } from "./songs.query"
 import {
     SongsResponseData,
-} from "../types"
+} from "./types"
 
 
 @Injectable()

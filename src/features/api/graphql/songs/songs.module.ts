@@ -2,26 +2,27 @@ import {
     Module,
 } from "@nestjs/common"
 import {
+    MutationsModule
+} from "./mutations"
+import {
+    QueriesModule 
+} from "./queries"
+import {
     SongsConfigurableModuleClass
 } from "./songs.module.definition"
 import {
-    GetSongsHandler 
-} from "./queries/songs.handler"
-import {
-    SongsResolver 
+    SongsResolver
 } from "./songs.resolver"
-import {
-    GetSongsService 
-} from "./queries/songs.service"
 
 /**
  * Module for the Songs.
  */
 @Module({
-    imports: [],
+    imports: [
+        QueriesModule,
+        MutationsModule,
+    ],
     providers: [
-        GetSongsHandler,
-        GetSongsService,
         SongsResolver,
     ]
 })

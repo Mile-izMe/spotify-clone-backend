@@ -6,6 +6,7 @@ import {
     parseEnvFloat,
     parseEnvInt,
     parseEnvMs,
+    parseEnvSecond,
     parseEnvString
 } from "./utils"
 
@@ -376,7 +377,7 @@ export const envConfig = () => ({
                 defaultValue: "spotify",
             }),
             presignedUrl: {
-                expiration: parseEnvMs({
+                expiration: parseEnvSecond({
                     key: "S3_MINIO_PRESIGNED_URL_EXPIRATION",
                     defaultValue: "15m",
                 }),

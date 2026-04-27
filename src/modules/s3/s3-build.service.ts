@@ -17,6 +17,8 @@ import {
     getSignedUrl 
 } from "@aws-sdk/s3-request-presigner"
 
+const MAX_PRESIGNED_URL_EXPIRATION_SECONDS = 60 * 60 * 24 * 7
+
 @Injectable()
 export class S3BuildService {
     constructor(
@@ -59,7 +61,7 @@ export class S3BuildService {
                 Key: key,
             }),
             {
-                expiresIn: expiration 
+                expiresIn: this.normalizePresignedExpiration(expiration) 
             },
         )
     }
@@ -83,8 +85,16 @@ export class S3BuildService {
                 ContentType: contentType,
             }),
             {
-                expiresIn: expiration 
+                expiresIn: this.normalizePresignedExpiration(expiration) 
             },
+        )
+    }
+
+    private normalizePresignedExpiration(expirationSeconds: number): number {
+        return Math.min(
+            Math.max(expirationSeconds,
+                1),
+            MAX_PRESIGNED_URL_EXPIRATION_SECONDS,
         )
     }
 }

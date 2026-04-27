@@ -1,12 +1,4 @@
 import {
-    Args,
-    Query,
-    Resolver,
-} from "@nestjs/graphql"
-import {
-    UseInterceptors,
-} from "@nestjs/common"
-import {
     GraphQLSuccessMessage,
     GraphQLTransformInterceptor,
 } from "@modules/api"
@@ -14,18 +6,33 @@ import {
     Locale,
 } from "@modules/databases"
 import {
+    UseInterceptors,
+} from "@nestjs/common"
+import {
+    Args,
+    Mutation,
+    Query,
+    Resolver,
+} from "@nestjs/graphql"
+import {
+    SongPresignUrlRequest,
+    SongPresignUrlResponse,
+    SongPresignUrlService
+} from "./mutations/song-presign-url"
+import {
+    GetSongsService,
+} from "./queries/songs/songs.service"
+import {
     SongsRequest,
     SongsResponse,
     SongsResponseData,
-} from "./types"
-import {
-    GetSongsService,
-} from "./queries/songs.service"
+} from "./queries/songs/types"
 
 @Resolver()
 export class SongsResolver {
     constructor(
         private readonly songsService: GetSongsService,
+        private readonly songPresignUrlService: SongPresignUrlService,
     ) { }
 
     /**
@@ -57,5 +64,35 @@ export class SongsResolver {
                 request,
             },
         )
+    }
+
+    /**
+     * Creates a presigned upload URL for song audio.
+     */
+    @Mutation(
+        () => SongPresignUrlResponse,
+        {
+            name: "songPresignUrl",
+            description: "Creates a presigned PUT URL for uploading song audio to MinIO.",
+        },
+    )
+    async songPresignUrl(
+        @Args(
+            "request",
+            {
+                description: "Request for the presigned upload URL.",
+            },
+        )
+            request: SongPresignUrlRequest,
+    ): Promise<SongPresignUrlResponse> {
+        const data = await this.songPresignUrlService.execute({
+            request,
+        })
+
+        return {
+            success: true,
+            message: "Song presigned URL created successfully",
+            data,
+        }
     }
 }

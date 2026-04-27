@@ -1,6 +1,6 @@
 import {
     SongsRequest,
-} from "../types"
+} from "./types"
 
 export interface SongsQueryParams {
     request: SongsRequest
