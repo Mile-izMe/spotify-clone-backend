@@ -1,23 +1,24 @@
 import {
-    PrismaModule 
+    PrismaModule
 } from "@modules/databases/prisma"
 import {
     EnvModule
 } from "@modules/env"
 import {
-    MixinModule 
+    MixinModule
 } from "@modules/mixin/mixin.module"
 import {
-    Module
+    S3Module
+} from "@modules/s3"
+import {
+    Module,
+    ValidationPipe
 } from "@nestjs/common"
 import {
-    ValidationPipe 
-} from "@nestjs/common"
-import {
-    APP_PIPE 
+    APP_PIPE
 } from "@nestjs/core"
 import {
-    CqrsModule 
+    CqrsModule
 } from "@nestjs/cqrs"
 /**
  * The main module for the application.
@@ -55,11 +56,11 @@ import {
             //     global: true,
             // }),
             // /** S3 module. */
-            // S3Module.register(
-            //     {
-            //         isGlobal: true,
-            //     }
-            // ),
+            S3Module.register(
+                {
+                    isGlobal: true,
+                }
+            ),
             // /** BullMQ module. */
             // BullModule.forRoot(
             //     {

@@ -10,6 +10,15 @@ import {
 import {
     ReadinessWatcherFactoryService
 } from "./readiness-watcher-factory.service"
+import {
+    AsyncService 
+} from "./async.service"
+import {
+    RetryService 
+} from "./retry.service"
+import {
+    createSuperJsonServiceProvider 
+} from "./superjson.providers"
 
 /**
  * Module for the Mixin service.
@@ -26,6 +35,9 @@ export class MixinModule extends MixinConfigurableModuleClass {
         const dynamicModule = super.register(options)
         const providers: Array<Provider> = [
             ReadinessWatcherFactoryService,
+            AsyncService,
+            RetryService,
+            createSuperJsonServiceProvider(),
         ]
         return {
             ...dynamicModule,
