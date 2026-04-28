@@ -51,7 +51,7 @@ export class ProcessMusicTranscodeStepService extends AbstractStepService<
         try {
             // 1. Call FfmpegService to convert to HLS
             // Await until 100%
-            await this.ffmpegService.convertToHls(localTempPath,
+            await this.ffmpegService.convertToHlsNew(localTempPath,
                 outputDir)
 
             // 2. Update Job Progress

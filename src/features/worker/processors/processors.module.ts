@@ -2,18 +2,18 @@ import {
     Module,
 } from "@nestjs/common"
 import {
+    ProcessMusicModule 
+} from "./process-music"
+import {
     ProcessorsConfigurableModuleClass,
 } from "./processors.module-definition"
-import {
-    EnrollModule,
-} from "./enroll"
 
 /**
  * Module for the processors.
  */
 @Module({
     imports: [
-        EnrollModule.register(
+        ProcessMusicModule.register(
             {
                 isGlobal: true,
             }

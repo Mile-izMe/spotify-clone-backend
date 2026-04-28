@@ -41,6 +41,8 @@ import type {
     ExtendedProcessMusicContext,
 } from "./types"
 
+type ProcessMusicJobData = ProcessMusicPayload | string
+
 /**
  * Worker: Process Music Submission → download → analyze → transcode → upload -> finalize.
  * Enqueued jobs must use `maxSteps` matching the pipeline (default `5`, see `JOB_PROCESS_MUSIC_SUBMISSION_MAX_STEPS`).
@@ -71,7 +73,7 @@ export class ProcessMusicWorker extends WorkerHost {
      * @param bullmqJob - The bullmq job from BullMQ queue.
      * @returns A promise that resolves when the job is processed.
      */
-    async process(bullmqJob: BullMQJob<string>) {
+    async process(bullmqJob: BullMQJob<ProcessMusicJobData>) {
         const startedAt = this.dayjsService.now()
         let payload: ProcessMusicPayload | undefined
         let job: PrismaJob | undefined
@@ -88,7 +90,13 @@ export class ProcessMusicWorker extends WorkerHost {
             })
 
             // 2. Parse Payload
-            payload = this.superJson.parse<ProcessMusicPayload>(bullmqJob.data)
+            // BullMQ may deliver `data` as an object (when producer passed an object)
+            // or as a string (if stored/stringified). Handle both cases.
+            if (typeof bullmqJob.data === "string") {
+                payload = this.superJson.parse<ProcessMusicPayload>(bullmqJob.data)
+            } else {
+                payload = bullmqJob.data as ProcessMusicPayload
+            }
             const stepMap = this.stepMappingService.getStepMap()
 
             // 3. Fetch data for extended context

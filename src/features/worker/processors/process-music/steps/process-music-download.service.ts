@@ -5,8 +5,8 @@ import {
     JobActionService
 } from "@modules/bussiness"
 import {
-    PrismaService
-} from "@modules/databases"
+    S3Provider
+} from "@modules/s3/enums"
 import {
     S3ReadService
 } from "@modules/s3/s3-read.service"
@@ -16,14 +16,11 @@ import {
 import * as fs from "fs"
 import * as path from "path"
 import {
+    pipeline
+} from "stream/promises"
+import {
     ExtendedProcessMusicContext
 } from "../types"
-import {
-    S3Provider 
-} from "@modules/s3/enums"
-import {
-    pipeline 
-} from "stream"
 
 @Injectable()
 export class ProcessMusicDownloadStepService extends AbstractStepService<
@@ -31,7 +28,6 @@ export class ProcessMusicDownloadStepService extends AbstractStepService<
     ExtendedProcessMusicContext
 > {
     constructor(
-        private readonly prisma: PrismaService,
         private readonly jobActionService: JobActionService,
         private readonly s3ReadService: S3ReadService,
     ) {

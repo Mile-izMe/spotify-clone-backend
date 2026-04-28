@@ -2,6 +2,9 @@ import {
     ApiModule 
 } from "@features/api"
 import {
+    WorkerModule 
+} from "@features/worker"
+import {
     BullModule 
 } from "@modules/bull"
 import {
@@ -16,6 +19,9 @@ import {
 import {
     EnvModule
 } from "@modules/env"
+import {
+    FfmpegModule 
+} from "@modules/ffmpeg"
 import {
     MixinModule
 } from "@modules/mixin/mixin.module"
@@ -141,11 +147,17 @@ import {
                 }
             ),
             // /** Worker module. */
-            // WorkerModule.register(
-            //     {
-            //         isGlobal: true,
-            //     }
-            // ),
+            WorkerModule.register(
+                {
+                    isGlobal: true,
+                }
+            ),
+            // /** Ffmpeg module. */
+            FfmpegModule.register(
+                {
+                    isGlobal: true,
+                }
+            )
             // /** Event Bus module. */
             // EventBusModule.register(
             //     {

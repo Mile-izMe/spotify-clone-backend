@@ -17,6 +17,9 @@ import {
 import {
     SongSaveMetadataResponseData,
 } from "./types"
+import {
+    EnqueueProcessMusicJobService 
+} from "@modules/bussiness"
 
 @CommandHandler(SongSaveMetadataCommand)
 @Injectable()
@@ -25,6 +28,7 @@ export class SongSaveMetadataHandler
     implements ICommandHandler<SongSaveMetadataCommand, SongSaveMetadataResponseData> {
     constructor(
         private readonly prisma: PrismaService,
+        private readonly enqueueProcessMusicJobService: EnqueueProcessMusicJobService
     ) {
         super()
     }
@@ -44,6 +48,11 @@ export class SongSaveMetadataHandler
                 thumbnailUrl: request.thumbnailUrl,
                 duration: request.duration,
             },
+        })
+
+        await this.enqueueProcessMusicJobService.enqueue({
+            songId: song.id,
+            userId: request.userId,
         })
 
         return {

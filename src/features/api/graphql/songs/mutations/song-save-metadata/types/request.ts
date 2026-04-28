@@ -8,6 +8,13 @@ import {
     description: "Request for saving song metadata after uploading the file.",
 })
 export class SongSaveMetadataRequest {
+        @Field(() => String,
+            {
+                description: "The uploaded file key returned by the presign mutation.",
+            })
+            userId: string
+
+
     @Field(() => String,
         {
             description: "The uploaded file key returned by the presign mutation.",

@@ -11,9 +11,6 @@ import {
     Injectable
 } from "@nestjs/common"
 import {
-    JobStatus
-} from "@prisma/client"
-import {
     ExtendedProcessMusicContext
 } from "../types"
 
@@ -51,14 +48,13 @@ export class ProcessMusicFinalizeStepService extends AbstractStepService<
             // 1. Restructure HLS to point to the main playlist file
             const hlsUrl = `processed/songs/${song.id}/playlist.m3u8`
 
-            // 2. Update Song record in database with HLS URL and set status to "COMPLETED"
+            // 2. Update Song record in database with HLS URL.
             await this.prisma.song.update({
                 where: {
                     id: song.id 
                 },
                 data: {
                     audioUrl: hlsUrl,
-                    status: JobStatus.COMPLETED,
                 },
             })
 
