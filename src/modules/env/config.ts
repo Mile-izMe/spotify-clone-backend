@@ -398,6 +398,21 @@ export const envConfig = () => ({
             }),
         },
     },
+    /** Elasticsearch configuration. */
+    elasticsearch: {
+        node: parseEnvString({
+            key: "ELASTICSEARCH_NODE",
+            defaultValue: "http://localhost:9200",
+        }),
+        username: parseEnvString({
+            key: "ELASTICSEARCH_USERNAME",
+            defaultValue: "elastic",
+        }),
+        password: parseEnvString({
+            key: "ELASTICSEARCH_PASSWORD",
+            defaultValue: "123456",
+        }),
+    },
     /** BullMQ configuration. */
     bullmq: {
         concurrency: parseEnvInt({

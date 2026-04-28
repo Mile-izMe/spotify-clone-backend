@@ -17,6 +17,9 @@ import {
     PrismaModule
 } from "@modules/databases/prisma"
 import {
+    ElasticsearchModule 
+} from "@modules/elasticsearch"
+import {
     EnvModule
 } from "@modules/env"
 import {
@@ -107,6 +110,12 @@ import {
                         RedisInstanceKey.Adapter,
                         RedisInstanceKey.Cache,
                     ],
+                    isGlobal: true,
+                }
+            ),
+            /** Elasticsearch module. */
+            ElasticsearchModule.register(
+                {
                     isGlobal: true,
                 }
             ),
