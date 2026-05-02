@@ -85,13 +85,27 @@ export class GetSongsHandler
                 limit)
             : songs
 
-        const mappedData = await Promise.all(currentItems.map(async (song) => ({
-            ...song,
-            audioUrl: await this.s3Build.buildSignedGetObjectUrl({
-                key: song.audioUrl,
-                provider: S3Provider.Minio,
-            }),
-        })))
+        const mappedData = await Promise.all(currentItems.map(async (song) => {
+            // If the stored audioUrl points to an HLS playlist (contains playlist.m3u8),
+            // return the backend proxy playlist URL so the frontend streams via our proxy.
+            // Use `includes` to be robust against prefixes/paths.
+            const isPlaylist = typeof song.audioUrl === "string" && song.audioUrl.includes("playlist.m3u8")
+
+            if (isPlaylist) {
+                return {
+                    ...song,
+                    audioUrl: `/api/s3/proxy/playlist/${song.id}`,
+                }
+            }
+
+            return {
+                ...song,
+                audioUrl: await this.s3Build.buildSignedGetObjectUrl({
+                    key: song.audioUrl,
+                    provider: S3Provider.Minio,
+                }),
+            }
+        }))
 
         const nextCursor = hasNextPage && currentItems.length
             ? encodeCursor(currentItems[currentItems.length - 1].id)

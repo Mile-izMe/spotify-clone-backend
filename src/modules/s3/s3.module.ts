@@ -21,6 +21,9 @@ import {
 import {
     S3ClientService 
 } from "./s3-client.service"
+import {
+    S3ProxyController 
+} from "./s3-proxy.controller"
 
 /**
  * S3 module.
@@ -35,6 +38,7 @@ export class S3Module extends S3ConfigurableModuleClass {
 
         return {
             ...dynamicModule,
+            controllers: [S3ProxyController],
             providers: [
                 ...(dynamicModule.providers ?? []),
                 minioS3Provider,
