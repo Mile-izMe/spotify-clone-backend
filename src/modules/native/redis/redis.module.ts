@@ -8,6 +8,9 @@ import {
 import {
     createRedisProvider 
 } from "./redis.providers"
+import {
+    RedisService,
+} from "./redis.service"
 
 @Module({
 })
@@ -26,9 +29,11 @@ export class RedisModule extends RedisConfigurableModuleClass {
             providers: [
                 ...(dynamicModule.providers || []),
                 ...providers,
+                RedisService,
             ],
             exports: [
                 ...providers,
+                RedisService,
             ],
         }
     }

@@ -45,8 +45,8 @@ export class ProcessMusicFinalizeStepService extends AbstractStepService<
         const { job } = context
         
         try {
-            // 1. Restructure HLS to point to the main playlist file
-            const hlsUrl = `processed/songs/${song.id}/playlist.m3u8`
+            // 1. Restructure HLS to point to the master playlist file
+            const hlsUrl = `processed/songs/${song.id}/master.m3u8`
 
             // 2. Update Song record in database with HLS URL.
             await this.prisma.song.update({

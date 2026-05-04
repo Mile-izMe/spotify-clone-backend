@@ -5,22 +5,19 @@ import {
     JobActionService
 } from "@modules/bussiness"
 import {
-    PrismaService
-} from "@modules/databases"
+    S3Provider
+} from "@modules/s3/enums"
 import {
-    S3WriteService 
+    S3WriteService
 } from "@modules/s3/s3-write.service"
 import {
     Injectable
 } from "@nestjs/common"
-import {
-    ExtendedProcessMusicContext
-} from "../types"
 import * as fs from "fs"
 import * as path from "path"
 import {
-    S3Provider 
-} from "@modules/s3/enums"
+    ExtendedProcessMusicContext
+} from "../types"
 
 @Injectable()
 export class ProcessMusicUploadStepService extends AbstractStepService<
@@ -28,7 +25,6 @@ export class ProcessMusicUploadStepService extends AbstractStepService<
     ExtendedProcessMusicContext
 > {
     constructor(
-        private readonly prisma: PrismaService,
         private readonly jobActionService: JobActionService,
         private readonly s3WriteService: S3WriteService,
     ) {
@@ -58,8 +54,8 @@ export class ProcessMusicUploadStepService extends AbstractStepService<
         }
         
         try {
-            // 1. Read all files in directory output (m3u8 & ts)
-            const files = fs.readdirSync(outputDir)
+            // 1. Read all files in directory output recursively (m3u8 & ts)
+            const files = this.collectFilesRecursively(outputDir)
 
             // 2. Upload each file to S3
             // Use Promise.all if small quantity of files, 
@@ -70,7 +66,8 @@ export class ProcessMusicUploadStepService extends AbstractStepService<
                 const fileStream = fs.createReadStream(filePath)
                 
                 // Structure S3 Key: processed/songs/{songId}/{fileName}
-                const s3Key = `processed/songs/${song.id}/${fileName}`
+                const s3Key = `processed/songs/${song.id}/${fileName.replace(/\\/g,
+                    "/")}`
 
                 const contentType = fileName.endsWith(".m3u8") 
                     ? "application/vnd.apple.mpegurl" 
@@ -93,6 +90,37 @@ export class ProcessMusicUploadStepService extends AbstractStepService<
         } catch (error) {
             throw new Error(`Upload step failed: ${error instanceof Error ? error.message : String(error)}`)
         }
+    }
+
+    private collectFilesRecursively(dirPath: string, relativePath = ""): Array<string> {
+        const currentPath = relativePath
+            ? path.join(dirPath,
+                relativePath)
+            : dirPath
+
+        const entries = fs.readdirSync(currentPath,
+            {
+                withFileTypes: true,
+            })
+
+        const files: Array<string> = []
+
+        for (const entry of entries) {
+            const nextRelativePath = relativePath
+                ? path.join(relativePath,
+                    entry.name)
+                : entry.name
+
+            if (entry.isDirectory()) {
+                files.push(...this.collectFilesRecursively(dirPath,
+                    nextRelativePath))
+                continue
+            }
+
+            files.push(nextRelativePath)
+        }
+
+        return files
     }
 }
     

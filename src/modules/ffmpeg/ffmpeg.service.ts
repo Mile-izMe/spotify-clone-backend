@@ -8,6 +8,9 @@ import * as fs from "fs"
 @Injectable()
 export class FfmpegService {
     private readonly logger = new Logger(FfmpegService.name)
+    private readonly audioBitrates = ["96k",
+        "128k",
+        "192k"]
 
     /**
    * Get Metadata of song (Duration, Bitrate...)
@@ -26,47 +29,8 @@ export class FfmpegService {
    * Transcode file into HLS format (.m3u8) to support Adaptive Streaming -> For media
    */
     async convertToHls(inputPath: string, outputDir: string): Promise<string> {
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir,
-                {
-                    recursive: true 
-                })
-        }
-
-        const outputFileName = "playlist.m3u8"
-        const outputPath = path.join(outputDir,
-            outputFileName)
-
-        return new Promise((resolve, reject) => {
-            ffmpeg(inputPath)
-                .outputOptions([
-                    "-profile:v main",
-                    "-crf 20",
-                    "-g 48",
-                    "-keyint_min 48",
-                    "-sc_threshold 0",
-                    "-hls_time 10",           // Split each segment into 10 seconds
-                    "-hls_playlist_type vod",
-                    "-hls_segment_filename",
-                    path.join(outputDir,
-                        "seg_%03d.ts"), // Mini file .ts
-                ])
-                .on("start",
-                    (command) => this.logger.log(`Spawned FFmpeg with command: ${command}`))
-                .on("progress",
-                    (progress) => this.logger.debug(`Processing: ${progress.percent}% done`))
-                .on("error",
-                    (err) => {
-                        this.logger.error(`Error transcoding: ${err.message}`)
-                        reject(err)
-                    })
-                .on("end",
-                    () => {
-                        this.logger.log("Transcoding finished!")
-                        resolve(outputPath)
-                    })
-                .save(outputPath)
-        })
+        return this.convertToHlsNew(inputPath,
+            outputDir)
     }
 
     async convertToHlsNew(inputPath: string, outputDir: string): Promise<string> {
@@ -77,42 +41,111 @@ export class FfmpegService {
                 })
         }
 
-        const outputFileName = "playlist.m3u8"
-        const outputPath = path.join(outputDir,
-            outputFileName)
+        const variants = this.audioBitrates.map((bitrate) => ({
+            bitrate,
+            bandwidth: this.bitrateToBandwidth(bitrate),
+        }))
+
+        for (const variant of variants) {
+            const variantDir = path.join(outputDir,
+                variant.bitrate)
+            if (!fs.existsSync(variantDir)) {
+                fs.mkdirSync(variantDir,
+                    {
+                        recursive: true 
+                    })
+            }
+
+            const playlistPath = path.join(variantDir,
+                "playlist.m3u8")
+            await this.transcodeVariant({
+                inputPath,
+                outputPath: playlistPath,
+                outputDir: variantDir,
+                bitrate: variant.bitrate,
+            })
+        }
+
+        const masterPlaylistPath = path.join(outputDir,
+            "master.m3u8")
+        const masterPlaylist = this.buildMasterPlaylist(variants)
+        fs.writeFileSync(masterPlaylistPath,
+            masterPlaylist,
+            "utf8")
+
+        return masterPlaylistPath
+    }
+
+    private async transcodeVariant(params: {
+        inputPath: string
+        outputPath: string
+        outputDir: string
+        bitrate: string
+    }): Promise<void> {
+        const {
+            inputPath,
+            outputPath,
+            outputDir,
+            bitrate,
+        } = params
 
         return new Promise((resolve, reject) => {
             ffmpeg(inputPath)
                 .outputOptions([
-                    "-c:a aac",            // Encode sang chuẩn AAC (chuẩn cho HLS)
-                    "-b:a 192k",           // Bitrate âm thanh
-                    "-vn",                 // QUAN TRỌNG: Loại bỏ video (Disable video) vì đây là file nhạc
-                    "-hls_time 10",        // Chia mỗi segment 10 giây
+                    "-c:a aac",
+                    `-b:a ${bitrate}`,
+                    "-vn",
+                    "-hls_time 10",
                     "-hls_playlist_type vod",
-                    "-hls_list_size 0",    // Giữ lại toàn bộ các segment trong playlist
+                    "-hls_list_size 0",
                     "-hls_segment_filename",
                     path.join(outputDir,
                         "seg_%03d.ts"),
                 ])
                 .on("start",
-                    (command) => this.logger.log(`Spawned FFmpeg with command: ${command}`))
+                    (command) => this.logger.log(`Spawned FFmpeg (${bitrate}) with command: ${command}`))
                 .on("progress",
                     (progress) => {
                         if (progress.percent) {
-                            this.logger.debug(`Processing: ${progress.percent.toFixed(2)}% done`)
+                            this.logger.debug(`Processing ${bitrate}: ${progress.percent.toFixed(2)}% done`)
                         }
                     })
                 .on("error",
                     (err) => {
-                        this.logger.error(`Error transcoding: ${err.message}`)
+                        this.logger.error(`Error transcoding ${bitrate}: ${err.message}`)
                         reject(err)
                     })
                 .on("end",
                     () => {
-                        this.logger.log("Transcoding finished!")
-                        resolve(outputPath)
+                        this.logger.log(`Transcoding finished for ${bitrate}!`)
+                        resolve()
                     })
                 .save(outputPath)
         })
+    }
+
+    private buildMasterPlaylist(variants: Array<{ bitrate: string; bandwidth: number }>): string {
+        const lines = [
+            "#EXTM3U",
+            "#EXT-X-VERSION:3",
+        ]
+
+        for (const variant of variants) {
+            lines.push(
+                `#EXT-X-STREAM-INF:BANDWIDTH=${variant.bandwidth},CODECS="mp4a.40.2"`,
+                `${variant.bitrate}/playlist.m3u8`,
+            )
+        }
+
+        return `${lines.join("\n")}\n`
+    }
+
+    private bitrateToBandwidth(bitrate: string): number {
+        const numeric = Number.parseInt(bitrate.replace(/[^0-9]/g,
+            ""),
+        10)
+        return Number.isFinite(numeric)
+            ? numeric * 1000
+            : 192000
     }
 }

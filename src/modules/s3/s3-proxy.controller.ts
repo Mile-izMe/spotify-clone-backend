@@ -22,15 +22,45 @@ import {
 import {
     S3ClientService 
 } from "./s3-client.service"
+import {
+    RedisService,
+} from "@modules/native"
+import {
+    envConfig 
+} from "@modules/env"
 
 @Controller("s3/proxy")
 export class S3ProxyController {
-    constructor(private readonly s3ClientService: S3ClientService) {}
+    constructor(
+        private readonly s3ClientService: S3ClientService,
+        private readonly redisService: RedisService,
+    ) {}
 
     @Get("playlist/:songId")
     async getPlaylist(@Param("songId") songId: string, @Res() res: Response) {
+        return this.sendPlaylist(songId,
+            "master.m3u8",
+            res)
+    }
+
+    @Get("playlist/:songId/*playlistPath")
+    async getVariantPlaylist(
+        @Param("songId") songId: string,
+        @Param("playlistPath") playlistPathParam: string | string[],
+        @Res() res: Response,
+    ) {
+        const playlistPath = Array.isArray(playlistPathParam)
+            ? playlistPathParam.join("/")
+            : playlistPathParam
+
+        return this.sendPlaylist(songId,
+            playlistPath,
+            res)
+    }
+
+    private async sendPlaylist(songId: string, playlistPath: string, res: Response) {
         const { client, bucket } = this.s3ClientService.getS3Resources(S3Provider.Minio)
-        const key = `processed/songs/${songId}/playlist.m3u8`
+        const key = `processed/songs/${songId}/${playlistPath}`
 
         try {
             const cmd = new GetObjectCommand({
@@ -75,7 +105,34 @@ export class S3ProxyController {
         const key = `processed/songs/${songId}/${segPath}`
 
         try {
+            // Redis key for cached segments
+            const redisKey = `video-segment:${songId}:${segPath}`
+
+            // If client requested a Range, don't use cache (partial content)
             const range = req.headers.range as string | undefined
+            if (!range) {
+                // try redis first
+                try {
+                    const cached = await this.redisService.get(redisKey)
+                    if (cached) {
+                        const buf = Buffer.from(cached,
+                            "base64")
+                        res.setHeader("content-length",
+                            buf.length.toString())
+                        res.setHeader("accept-ranges",
+                            "bytes")
+                        res.setHeader("content-type",
+                            "video/MP2T")
+                        return res.send(buf)
+                    }
+                } catch (redisErr) {
+                    // ignore redis errors and fallback to fetching from S3
+                    console.error("Redis read failed for key",
+                        redisKey,
+                        redisErr)
+                }
+            }
+
             const params: GetObjectCommandInput = {
                 Bucket: bucket,
                 Key: key,
@@ -94,7 +151,9 @@ export class S3ProxyController {
                 throw new Error("NoBody")
             }
 
-            if (data.ContentLength) {
+            // If response already contains content-length/content-range, keep them
+            if (data.ContentLength && !range) {
+                // only set when not partial
                 res.setHeader("content-length",
                     data.ContentLength.toString())
             }
@@ -108,7 +167,32 @@ export class S3ProxyController {
                 "video/MP2T")
 
             const body = data.Body as Readable
-            body.pipe(res)
+
+            // If it's a range request, stream directly
+            if (range) {
+                return body.pipe(res)
+            }
+
+            // Otherwise (no range): collect into buffer, cache in Redis (base64) and return
+            const chunks: Buffer[] = []
+            for await (const chunk of body) {
+                chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+            }
+            const buf = Buffer.concat(chunks)
+
+            // store in redis as base64 with TTL (30 minutes default)
+            const ttlSeconds = envConfig().redis.cache.ttlCacheStreamMs
+            try {
+                await this.redisService.set(redisKey,
+                    buf.toString("base64"),
+                    ttlSeconds)
+            } catch (redisErr) {
+                console.error("Redis set failed for key",
+                    redisKey,
+                    redisErr)
+            }
+
+            return res.send(buf)
         } catch (err: unknown) {
             if (err instanceof Error && err.name === "NoSuchKey") {
                 throw new HttpException("Segment not found",
@@ -128,6 +212,7 @@ export class S3ProxyController {
     }
 
     private rewritePlaylistForProxy(playlist: string, songId: string): string {
+        const playlistBasePath = `/api/s3/proxy/playlist/${songId}/`
         const segmentBasePath = `/api/s3/proxy/${songId}/segments/`
 
         return playlist
@@ -145,7 +230,9 @@ export class S3ProxyController {
                             if (this.isAbsoluteOrRootPath(uri)) {
                                 return `URI="${uri}"`
                             }
-                            return `URI="${segmentBasePath}${uri}"`
+                            return uri.endsWith(".m3u8")
+                                ? `URI="${playlistBasePath}${uri}"`
+                                : `URI="${segmentBasePath}${uri}"`
                         })
                 }
 
@@ -155,6 +242,10 @@ export class S3ProxyController {
 
                 if (this.isAbsoluteOrRootPath(trimmed)) {
                     return line
+                }
+
+                if (trimmed.endsWith(".m3u8")) {
+                    return `${playlistBasePath}${trimmed}`
                 }
 
                 return `${segmentBasePath}${trimmed}`

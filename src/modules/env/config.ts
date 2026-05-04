@@ -148,6 +148,10 @@ export const envConfig = () => ({
                 key: "REDIS_CACHE_USE_CLUSTER",
                 defaultValue: false,
             }),
+            ttlCacheStreamMs: parseEnvMs({
+                key: "REDIS_CACHE_TTL_CACHE_STREAM_MS",
+                defaultValue: "30m",
+            }),
         },
     },
     /** Wait configuration. */
