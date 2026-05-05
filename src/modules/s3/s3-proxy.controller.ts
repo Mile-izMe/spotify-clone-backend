@@ -60,35 +60,50 @@ export class S3ProxyController {
 
     private async sendPlaylist(songId: string, playlistPath: string, res: Response) {
         const { client, bucket } = this.s3ClientService.getS3Resources(S3Provider.Minio)
-        const key = `processed/songs/${songId}/${playlistPath}`
-
-        try {
-            const cmd = new GetObjectCommand({
-                Bucket: bucket,
-                Key: key,
-            })
-            const data = await client.send(cmd)
-
-            if (!data.Body) {
-                throw new Error("NoBody")
-            }
-
-            const body = data.Body as Readable
-            const rawPlaylist = await this.readStreamAsUtf8(body)
-            const rewrittenPlaylist = this.rewritePlaylistForProxy(rawPlaylist,
-                songId)
-
-            res.setHeader("content-type",
-                "application/vnd.apple.mpegurl")
-            res.send(rewrittenPlaylist)
-        } catch (err: unknown) {
-            if (err instanceof Error && err.name === "NoSuchKey") {
-                throw new HttpException("Playlist not found",
-                    HttpStatus.NOT_FOUND)
-            }
-            throw new HttpException("Error fetching playlist",
-                HttpStatus.INTERNAL_SERVER_ERROR)
+        // Try requested playlist path first. If not found and requested was
+        // "master.m3u8", fall back to "playlist.m3u8" which some pipelines
+        // or older workers may produce (see MinIO screenshot).
+        const tryPaths = [playlistPath]
+        if (playlistPath === "master.m3u8") {
+            tryPaths.push("playlist.m3u8")
         }
+
+        for (const p of tryPaths) {
+            const key = `processed/songs/${songId}/${p}`
+            try {
+                const cmd = new GetObjectCommand({
+                    Bucket: bucket,
+                    Key: key,
+                })
+                const data = await client.send(cmd)
+
+                if (!data.Body) {
+                    throw new Error("NoBody")
+                }
+
+                const body = data.Body as Readable
+                const rawPlaylist = await this.readStreamAsUtf8(body)
+                const rewrittenPlaylist = this.rewritePlaylistForProxy(rawPlaylist,
+                    songId)
+
+                res.setHeader("content-type",
+                    "application/vnd.apple.mpegurl")
+                return res.send(rewrittenPlaylist)
+            } catch (err: unknown) {
+                // If key not found, try next candidate; otherwise rethrow
+                if (err instanceof Error && err.name === "NoSuchKey") {
+                    // continue to next attempt
+                    continue
+                }
+                // For other errors, return 500
+                throw new HttpException("Error fetching playlist",
+                    HttpStatus.INTERNAL_SERVER_ERROR)
+            }
+        }
+
+        // If none of the candidate paths existed, return 404
+        throw new HttpException("Playlist not found",
+            HttpStatus.NOT_FOUND)
     }
 
     @Get(":songId/segments/*segPath")

@@ -14,14 +14,8 @@ import {
     PrismaService 
 } from "@modules/databases"
 import {
-    S3BuildService 
-} from "@modules/s3/s3-build.service"
-import {
     SongsResponseData 
 } from "./types"
-import {
-    S3Provider 
-} from "@modules/s3/enums/s3"
 import {
     ICQRSHandler 
 } from "@modules/cqrs"
@@ -43,7 +37,6 @@ export class GetSongsHandler
     implements IQueryHandler<SongsQuery, SongsResponseData> {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly s3Build: S3BuildService,
     ) {
         super()
     }
@@ -55,7 +48,12 @@ export class GetSongsHandler
         const limit = normalizeLimit(filters.limit)
         const pageNumber = normalizePageNumber(filters.pageNumber)
         const cursorId = decodeCursor(filters.cursor)
-        const where: Prisma.SongWhereInput = buildSongWhere(filters.search)
+        const where: Prisma.SongWhereInput = {
+            ...buildSongWhere(filters.search),
+            audioUrl: {
+                contains: "playlist.m3u8",
+            },
+        }
         const orderBy = buildSongOrderBy(filters.sorts)
         const skip = cursorId
             ? 1
@@ -86,24 +84,9 @@ export class GetSongsHandler
             : songs
 
         const mappedData = await Promise.all(currentItems.map(async (song) => {
-            // If the stored audioUrl points to an HLS playlist (contains playlist.m3u8),
-            // return the backend proxy playlist URL so the frontend streams via our proxy.
-            // Use `includes` to be robust against prefixes/paths.
-            const isPlaylist = typeof song.audioUrl === "string" && song.audioUrl.includes("playlist.m3u8")
-
-            if (isPlaylist) {
-                return {
-                    ...song,
-                    audioUrl: `/api/s3/proxy/playlist/${song.id}`,
-                }
-            }
-
             return {
                 ...song,
-                audioUrl: await this.s3Build.buildSignedGetObjectUrl({
-                    key: song.audioUrl,
-                    provider: S3Provider.Minio,
-                }),
+                audioUrl: `/api/s3/proxy/playlist/${song.id}`,
             }
         }))
 

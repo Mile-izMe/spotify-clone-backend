@@ -14,18 +14,86 @@ datasource db {
 /**
  * User model representing application users. Each user can have multiple playlists.
  */
+
+enum UserStatus {
+  ACTIVE
+  PENDING
+  BANNED
+}
 model User {
   id        String     @id @default(uuid())
   username  String     @unique
   password  String
+  email     String     @unique
+  isActive  Boolean    @map("is_active") @default(false)
+  status    UserStatus @default(ACTIVE)
   playlists Playlist[]
-  
+  refreshTokens RefreshToken[]
+
   createdAt DateTime   @map("created_at") @default(now())
   createBy  String?    @map("create_by")
   updatedAt DateTime   @map("updated_at") @default(now())
   updateBy  String?    @map("update_by")
 
   @@map("users")
+}
+
+enum RoleName {
+  USER
+  ADMIN
+}
+model Role {
+  id          String   @id @default(uuid())
+  name        RoleName
+  permissions RolePermission[]
+  
+  createdAt DateTime @map("created_at") @default(now())
+  createBy  String?  @map("create_by")
+  updatedAt DateTime @map("updated_at") @default(now())
+  updateBy  String?  @map("update_by")
+
+  @@map("roles")
+}
+
+model Permission {
+  id        String   @id @default(uuid())
+  name      String
+  roles     RolePermission[]
+  
+  createdAt DateTime @map("created_at") @default(now())
+  createBy  String?  @map("create_by")
+  updatedAt DateTime @map("updated_at") @default(now())
+  updateBy  String?  @map("update_by")
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  role       Role       @relation(fields: [roleId], references: [id])
+  roleId     String     @map("role_id")
+  permission Permission @relation(fields: [permissionId], references: [id])
+  permissionId String   @map("permission_id")
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  tokenHash  String   @map("token_hash") @unique
+  userId     String   @map("user_id")
+  expiryDate DateTime @map("expiry_date")
+  deviceId   String?  @map("device_id")
+  isRevoked  Boolean  @map("is_revoked") @default(false)
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @map("created_at") @default(now())
+  createBy  String?  @map("create_by")
+  updatedAt DateTime @map("updated_at") @default(now())
+  updateBy  String?  @map("update_by")
+
+  @@map("refresh_tokens")
 }
 
 /**
