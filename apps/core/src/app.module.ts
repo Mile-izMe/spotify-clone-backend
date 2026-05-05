@@ -26,9 +26,14 @@ import {
     FfmpegModule 
 } from "@modules/ffmpeg"
 import {
+    HashModule 
+} from "@modules/hash/hash.module"
+import {
     MixinModule
 } from "@modules/mixin/mixin.module"
 import {
+    IoRedisInstanceKey,
+    IoRedisModule,
     RedisInstanceKey, RedisModule 
 } from "@modules/native"
 import {
@@ -56,6 +61,10 @@ import {
             MixinModule.register({
                 isGlobal: true,
             }),
+            /** Hash module. */
+            HashModule.register({
+                isGlobal: true,
+            }),
             // /** Axios module. */
             // AxiosModule.register(
             //     {
@@ -75,10 +84,6 @@ import {
             CQRSModule.register({
                 isGlobal: true,
             }),
-            // /** Jwt module. */
-            // JwtModule.register({
-            //     global: true,
-            // }),
             // /** S3 module. */
             S3Module.register(
                 {
@@ -109,6 +114,14 @@ import {
                     instanceKeys: [
                         RedisInstanceKey.Adapter,
                         RedisInstanceKey.Cache,
+                    ],
+                    isGlobal: true,
+                }
+            ),
+            IoRedisModule.register(
+                {
+                    instanceKeys: [
+                        IoRedisInstanceKey.Cache,
                     ],
                     isGlobal: true,
                 }
