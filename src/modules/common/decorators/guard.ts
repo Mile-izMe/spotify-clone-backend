@@ -6,6 +6,5 @@ import {
 } from "../types"
 
 export const CheckPermissions = (...permissions: string[]) => {
-    SetMetadata(PERMISSIONS_KEY,
-        permissions)
+    return SetMetadata(PERMISSIONS_KEY, permissions)
 }

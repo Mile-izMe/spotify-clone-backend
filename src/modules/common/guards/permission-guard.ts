@@ -1,11 +1,16 @@
 import {
-    CanActivate, ExecutionContext, ForbiddenException, Injectable 
+    CanActivate,
+    ExecutionContext,
+    ForbiddenException, Injectable
 } from "@nestjs/common"
 import {
-    Reflector 
+    Reflector
 } from "@nestjs/core"
 import {
-    PERMISSIONS_KEY 
+    GqlExecutionContext
+} from "@nestjs/graphql"
+import {
+    PERMISSIONS_KEY
 } from "../types"
 
 @Injectable()
@@ -27,7 +32,10 @@ export class PermissionsGuard implements CanActivate {
 
         // Check if the user has the required permissions
         // Get user information from Request (from Passport attached when verifying JWT token)
-        const user = context.switchToHttp().getRequest()
+        const ctx = GqlExecutionContext.create(context)
+        const { req } = ctx.getContext()
+        const user = req.user
+        
         if (!user || !user.permissions) {
             throw new ForbiddenException("User does not have permissions to access this resource")
         }
