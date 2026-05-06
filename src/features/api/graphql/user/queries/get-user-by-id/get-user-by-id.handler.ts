@@ -1,25 +1,24 @@
 import {
+    ICQRSHandler
+} from "@modules/cqrs"
+import {
+    PrismaService
+} from "@modules/databases"
+import {
     Injectable,
 } from "@nestjs/common"
 import {
     IQueryHandler, QueryHandler
 } from "@nestjs/cqrs"
 import {
-    Prisma,
-} from "@prisma/client"
+    UserItem,
+} from "../shared/user-item"
 import {
     GetUserByIdQuery
 } from "./get-user-by-id.query"
 import {
-    PrismaService
-} from "@modules/databases"
-import {
     GetUserByIdResponseData,
-    GetUserByIdItem,
 } from "./types"
-import {
-    ICQRSHandler
-} from "@modules/cqrs"
 
 @QueryHandler(GetUserByIdQuery)
 @Injectable()
@@ -41,6 +40,21 @@ export class GetUserByIdHandler
             where: {
                 id 
             },
+            include: {
+                roles: {
+                    include: {
+                        role: {
+                            include: {
+                                permissions: {
+                                    include: {
+                                        permission: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         })
 
         if (!user) {
@@ -49,39 +63,22 @@ export class GetUserByIdHandler
             }
         }
 
-        const roleRows = await this.prisma.$queryRaw<Array<{
-            roleName: string
-            permissionName: string | null
-        }>>(Prisma.sql`
-            SELECT r.name AS "roleName",
-                   p.name AS "permissionName"
-            FROM user_roles ur
-            INNER JOIN roles r ON ur.role_id = r.id
-            LEFT JOIN role_permissions rp ON rp.role_id = r.id
-            LEFT JOIN permissions p ON rp.permission_id = p.id
-            WHERE ur.user_id = ${id}
-        `)
+        // Extract roles from the nested structure
+        const roles = user.roles.map((ur) => ur.role.name)
 
-        const roles = Array.from(new Set(roleRows.map((row) => row.roleName)))
-        const permissions = Array.from(new Set(
-            roleRows
-                .map((row) => row.permissionName)
-                .filter((permissionName): permissionName is string => Boolean(permissionName)),
-        ))
+        // Extract permissions and remove duplicates using Set
+        const permissions = Array.from(
+            new Set(
+                user.roles.flatMap((ur) =>
+                    ur.role.permissions.map((rp) => rp.permission.name),
+                ),
+            ),
+        )
 
-        const mapped: GetUserByIdItem = {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            password: user.password,
-            isActive: user.isActive,
-            status: user.status,
+        const mapped: UserItem = {
+            ...user,
             roles,
             permissions,
-            createdAt: user.createdAt,
-            createBy: user.createBy,
-            updatedAt: user.updatedAt,
-            updateBy: user.updateBy,
         }
 
         return {
