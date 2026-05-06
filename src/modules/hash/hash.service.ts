@@ -30,7 +30,8 @@ export class HashService {
                     type: argon2.argon2id,
                 })
         } catch (error) {
-            this.logger.error(`Error hashing password: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : "Unknown error"
+            this.logger.error(`Error hashing password: ${errorMessage}`)
             throw new InternalServerErrorException("Error processing security data")
         }
     }
@@ -46,7 +47,8 @@ export class HashService {
             return await argon2.verify(hash,
                 password)
         } catch (error) {
-            this.logger.error(`Error verifying password: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : "Unknown error"
+            this.logger.error(`Error verifying password: ${errorMessage}`)
             return false
         }
     }
@@ -70,7 +72,8 @@ export class HashService {
                 ttl)
             return token
         } catch (error) {
-            this.logger.error(`Error saving token to Redis: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : "Unknown error"
+            this.logger.error(`Error saving token to Redis: ${errorMessage}`)
             throw new InternalServerErrorException("Could not generate verification session")
         }
     }
@@ -93,7 +96,8 @@ export class HashService {
             }
             return null
         } catch (error) {
-            this.logger.error(`Error retrieving token from Redis: ${error.message}`)
+            const errorMessage = error instanceof Error ? error.message : "Unknown error"
+            this.logger.error(`Error retrieving token from Redis: ${errorMessage}`)
             return null
         }
     }

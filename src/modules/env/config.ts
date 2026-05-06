@@ -23,6 +23,19 @@ export const envConfig = () => ({
             defaultValue: "development",
         }
     ) === "production",
+    /** JWT configuration. */
+    auth: {
+        jwt: {
+            atSecret: parseEnvString({
+                key: "JWT_AT_SECRET",
+                defaultValue: "melody_stream_access_token_secret",
+            }),
+            rtSecret: parseEnvString({
+                key: "JWT_RT_SECRET",
+                defaultValue: "melody_stream_refresh_token_secret",
+            }),
+        }
+    },
     /** Services configuration. */
     services: {
         core: {

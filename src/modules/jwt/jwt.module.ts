@@ -5,15 +5,15 @@ import {
     JwtConfigurableModuleClass
 } from "./jwt.module-definition"
 import {
-    JwtService 
+    AuthService 
 } from "./jwt.service"
 
 @Module({
     providers: [
-        JwtService,
+        AuthService,
     ],
     exports: [
-        JwtService,
+        AuthService,
     ],
 })
 export class JwtModule extends JwtConfigurableModuleClass {}

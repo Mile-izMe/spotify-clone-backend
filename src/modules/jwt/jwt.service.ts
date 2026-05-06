@@ -55,8 +55,8 @@ export class AuthService {
             sub: userId, roles, permissions, deviceId 
         }
 
-        // Access Token: Thời gian sống ngắn
-        // Refresh Token: Thời gian sống dài (Vd: 7 ngày)
+        // Access Token: Short lived (Vd: 15m) to lower risk when token being leaked
+        // Refresh Token: Long lived (Vd: 7d)
         const [at,
             rt] = await Promise.all([
             this.jwtService.signAsync(payload,
