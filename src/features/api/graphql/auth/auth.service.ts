@@ -19,19 +19,39 @@ import {
 import {
     envConfig 
 } from "@modules/env"
+import {
+    GetUserByEmailQuery,
+} from "../user/queries/get-user-by-email/get-user-by-email.query"
+import {
+    GetUserByIdQuery,
+} from "../user/queries/get-user-by-id/get-user-by-id.query"
+import {
+    QueryBus 
+} from "@nestjs/cqrs"
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly jwtService: JwtService,
         private readonly hashService: HashService,
-        private readonly usersService: UserService,
+        private readonly queryBus: QueryBus,
         private readonly redisService: RedisService,
     ) {}
     private readonly logger = new Logger(AuthService.name)
 
     async login(email: string, pass: string, deviceId: string) {
-        const user = await this.usersService.findByEmail(email)
+        const userResult = await this.queryBus.execute(
+            new GetUserByEmailQuery({
+                request: {
+                    email,
+                },
+            }),
+        )
+
+        const user = userResult.data
+        if (!user) {
+            throw new UnauthorizedException("Invalid credentials")
+        }
     
         // 1. Check password
         const isMatch = await this.hashService.comparePassword(pass,
@@ -112,7 +132,18 @@ export class AuthService {
                 })
 
             // 3. Get latest user information (to prevent role/permission changes not reflected)
-            const user = await this.usersService.findById(decoded.sub)
+            const userResult = await this.queryBus.execute(
+                new GetUserByIdQuery({
+                    request: {
+                        id: decoded.sub,
+                    },
+                }),
+            )
+
+            const user = userResult.data
+            if (!user) {
+                throw new UnauthorizedException("Session expired or invalid")
+            }
       
             // 4. Generate new token pair (rotate)
             return this.generateTokenPair(user.id,

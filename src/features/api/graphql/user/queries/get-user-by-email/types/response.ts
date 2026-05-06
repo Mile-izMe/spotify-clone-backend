@@ -7,7 +7,7 @@ import {
 } from "@modules/api"
 
 @ObjectType()
-export class GetUserByIdItem {
+export class GetUserByEmailItem {
     @Field(() => String)
         id: string
 
@@ -52,23 +52,23 @@ export class GetUserByIdItem {
 }
 
 @ObjectType()
-export class GetUserByIdResponseDataObject {
-    @Field(() => GetUserByIdItem,
+export class GetUserByEmailResponseDataObject {
+    @Field(() => GetUserByEmailItem,
         {
             nullable: true 
         })
-        data?: GetUserByIdItem | null
+        data?: GetUserByEmailItem | null
 }
 
 @ObjectType()
-export class GetUserByIdResponse extends AbstractGraphQLResponse {
-    @Field(() => GetUserByIdResponseDataObject,
+export class GetUserByEmailResponse extends AbstractGraphQLResponse {
+    @Field(() => GetUserByEmailResponseDataObject,
         {
             nullable: true 
         })
-        data?: GetUserByIdResponseDataObject | null
+        data?: GetUserByEmailResponseDataObject | null
 }
 
-export interface GetUserByIdResponseData {
-    data?: GetUserByIdItem | null
+export interface GetUserByEmailResponseData {
+    data?: GetUserByEmailItem | null
 }

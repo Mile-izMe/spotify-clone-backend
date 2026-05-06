@@ -10,15 +10,24 @@ import {
 import {
     GetUserByIdService
 } from "./get-user-by-id/get-user-by-id.service"
+import {
+    GetUserByEmailHandler,
+} from "./get-user-by-email/get-user-by-email.handler"
+import {
+    GetUserByEmailService,
+} from "./get-user-by-email/get-user-by-email.service"
 
 @Module({
     imports: [],
     providers: [
         GetUserByIdHandler,
         GetUserByIdService,
+        GetUserByEmailHandler,
+        GetUserByEmailService,
     ],
     exports: [
         GetUserByIdService,
+        GetUserByEmailService,
     ]
 })
 export class QueriesModule extends QueriesConfigurableModuleClass {}
