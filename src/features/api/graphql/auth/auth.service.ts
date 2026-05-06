@@ -16,13 +16,16 @@ import {
 import {
     JwtPayload 
 } from "./types/jwt"
+import {
+    envConfig 
+} from "@modules/env"
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly jwtService: JwtService,
         private readonly hashService: HashService,
-        private readonly usersService: UsersService,
+        private readonly usersService: UserService,
         private readonly redisService: RedisService,
     ) {}
     private readonly logger = new Logger(AuthService.name)
@@ -61,11 +64,11 @@ export class AuthService {
             rt] = await Promise.all([
             this.jwtService.signAsync(payload,
                 {
-                    expiresIn: "15m", secret: process.env.JWT_AT_SECRET 
+                    expiresIn: "15m", secret: envConfig().auth.jwt.atSecret 
                 }),
             this.jwtService.signAsync(payload,
                 {
-                    expiresIn: "7d", secret: process.env.JWT_RT_SECRET 
+                    expiresIn: "7d", secret: envConfig().auth.jwt.rtSecret 
                 }),
         ])
 
@@ -105,7 +108,7 @@ export class AuthService {
             // 2. Verify token (expiration, signature)
             await this.jwtService.verifyAsync(oldRt,
                 {
-                    secret: process.env.JWT_RT_SECRET 
+                    secret: envConfig().auth.jwt.rtSecret 
                 })
 
             // 3. Get latest user information (to prevent role/permission changes not reflected)
@@ -118,7 +121,8 @@ export class AuthService {
                 deviceId)
       
         } catch (e) {
-            this.logger.error(`Refresh failed: ${e.message}`)
+            const errorMessage = e instanceof Error ? e.message : "Unknown error"
+            this.logger.error(`Refresh failed: ${errorMessage}`)
             throw new UnauthorizedException("Session expired or invalid")
         }
     }

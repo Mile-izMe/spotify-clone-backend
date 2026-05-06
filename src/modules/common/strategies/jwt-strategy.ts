@@ -11,11 +11,11 @@ import {
     RedisService 
 } from "@modules/native"
 import {
-    JwtPayload 
-} from "../../jwt/types"
-import {
     envConfig 
 } from "@modules/env"
+import {
+    JwtPayload 
+} from "@features/api/graphql/auth/types"
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -29,9 +29,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
     
     /**
-   * validate func called when Passport verify signature and expiration successfully.
-   * Response will be assigned to `req.user`.
-   */
+    * validate func called when Passport verify signature and expiration successfully.
+    * Response will be assigned to `req.user`.
+    */
     async validate(payload: JwtPayload) {
         // ADVANCED: Check acessToken in BlackList (user Logout)
         // This key set in logout func with TTL as the time left of AT
