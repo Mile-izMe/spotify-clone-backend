@@ -9,22 +9,22 @@ import {
 
 
 @ObjectType()
-export class SongPresignUrlResponseData {
+export class LoginResponseData {
     @Field(() => String,
         {
-            description: "Generated object key to store in database after upload.",
+            description: "Issued access token.",
         })
-        key: string
+        accessToken: string
 
     @Field(() => String,
         {
-            description: "Presigned PUT URL used by the client to upload the file.",
+            description: "Issued refresh token.",
         })
-        url: string
+        refreshToken: string
 }
 
 @ObjectType()
-export class SongPresignUrlResponse extends AbstractGraphQLResponse {
-    @Field(() => SongPresignUrlResponseData)
-        data: SongPresignUrlResponseData
+export class LoginResponse extends AbstractGraphQLResponse {
+    @Field(() => LoginResponseData)
+        data: LoginResponseData
 }

@@ -11,9 +11,6 @@ import {
     MutationsModule
 } from "./mutations"
 import {
-    AuthService 
-} from "./auth.service"
-import {
     JwtModule 
 } from "@nestjs/jwt"
 import {
@@ -34,7 +31,6 @@ import {
     ],
     providers: [
         AuthResolver,
-        AuthService,
     ]
 })
 export class AuthModule extends AuthConfigurableModuleClass {}

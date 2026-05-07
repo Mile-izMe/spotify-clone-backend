@@ -3,19 +3,24 @@ import {
 } from "@nestjs/graphql"
 
 @InputType({
-    description: "Request for generating a presigned URL to upload a song file.",
+    description: "Login request with credentials and device context.",
 })
-export class SongPresignUrlRequest {
+export class LoginRequest {
     @Field(() => String,
         {
-            description: "MIME type of the file to upload.",
+            description: "User email.",
         })
-        contentType: string
+        email: string
 
     @Field(() => String,
         {
-            nullable: true,
-            description: "Optional original file name used to keep the extension.",
+            description: "User password.",
         })
-        fileName?: string
+        password: string
+
+    @Field(() => String,
+        {
+            description: "Device identifier used for refresh token rotation.",
+        })
+        deviceId: string
 }

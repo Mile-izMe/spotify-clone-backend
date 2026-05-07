@@ -2,10 +2,11 @@ import {
     Module,
 } from "@nestjs/common"
 import {
-    SongPresignUrlHandler 
-} from "./login/song-presign-url.handler"
+    AuthService,
+} from "../auth.service"
 import {
-    SongPresignUrlService 
+    LoginHandler,
+    LoginService,
 } from "./login"
 import {
     SongSaveMetadataHandler,
@@ -22,13 +23,15 @@ import {
 @Module({
     imports: [],
     providers: [
-        SongPresignUrlHandler,
-        SongPresignUrlService,
+        AuthService,
+        LoginHandler,
+        LoginService,
         SongSaveMetadataHandler,
         SongSaveMetadataService,
     ],
     exports: [
-        SongPresignUrlService,
+        AuthService,
+        LoginService,
         SongSaveMetadataService,
     ]
 })

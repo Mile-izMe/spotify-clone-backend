@@ -1,7 +1,4 @@
 import {
-    HashService
-} from "@modules/hash/hash.service"
-import {
     RedisService
 } from "@modules/native"
 import {
@@ -20,9 +17,6 @@ import {
     envConfig 
 } from "@modules/env"
 import {
-    GetUserByEmailQuery,
-} from "../user/queries/get-user-by-email/get-user-by-email.query"
-import {
     GetUserByIdQuery,
 } from "../user/queries/get-user-by-id/get-user-by-id.query"
 import {
@@ -33,42 +27,15 @@ import {
 export class AuthService {
     constructor(
         private readonly jwtService: JwtService,
-        private readonly hashService: HashService,
         private readonly queryBus: QueryBus,
         private readonly redisService: RedisService,
     ) {}
     private readonly logger = new Logger(AuthService.name)
 
-    async login(email: string, pass: string, deviceId: string) {
-        const userResult = await this.queryBus.execute(
-            new GetUserByEmailQuery({
-                request: {
-                    email,
-                },
-            }),
-        )
-
-        const user = userResult.data
-        if (!user) {
-            throw new UnauthorizedException("Invalid credentials")
-        }
-    
-        // 1. Check password
-        const isMatch = await this.hashService.comparePassword(pass,
-            user.password)
-        if (!isMatch) throw new UnauthorizedException("Invalid credentials")
-
-        // 2. Create Token Pair
-        return this.generateTokenPair(user.id,
-            user.roles,
-            user.permissions,
-            deviceId)
-    }
-
     /**
     * GENERATE TOKEN PAIR (Hỗ trợ Rotation)
     */
-    private async generateTokenPair(
+    async generateTokenPair(
         userId: string, 
         roles: string[], 
         permissions: string[], 

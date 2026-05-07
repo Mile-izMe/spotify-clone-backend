@@ -4,9 +4,9 @@ import {
     Resolver
 } from "@nestjs/graphql"
 import {
-    SongPresignUrlRequest,
-    SongPresignUrlResponse,
-    SongPresignUrlService
+    LoginRequest,
+    LoginResponse,
+    LoginService
 } from "./mutations/login"
 import {
     SongSaveMetadataRequest,
@@ -17,7 +17,7 @@ import {
 @Resolver()
 export class AuthResolver {
     constructor(
-        private readonly songPresignUrlService: SongPresignUrlService,
+        private readonly loginService: LoginService,
         private readonly songSaveMetadataService: SongSaveMetadataService,
     ) { }
 
@@ -25,28 +25,28 @@ export class AuthResolver {
      * Login
      */
     @Mutation(
-        () => SongPresignUrlResponse,
+        () => LoginResponse,
         {
-            name: "songPresignUrl",
-            description: "Creates a presigned PUT URL for uploading song audio to MinIO.",
+            name: "login",
+            description: "Authenticate user with email and password, returning access and refresh tokens.",
         },
     )
-    async songPresignUrl(
+    async login(
         @Args(
             "request",
             {
-                description: "Request for the presigned upload URL.",
+                description: "User credentials and device identifier.",
             },
         )
-            request: SongPresignUrlRequest,
-    ): Promise<SongPresignUrlResponse> {
-        const data = await this.songPresignUrlService.execute({
+            request: LoginRequest,
+    ): Promise<LoginResponse> {
+        const data = await this.loginService.execute({
             request,
         })
 
         return {
             success: true,
-            message: "Song presigned URL created successfully",
+            message: "Login successful",
             data,
         }
     }
