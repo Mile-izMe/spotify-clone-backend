@@ -5,18 +5,21 @@ import {
     Field,
     ObjectType,
 } from "@nestjs/graphql"
-import {
-    SongItem,
-} from "../../../queries/songs/types"
 
 @ObjectType()
-export class SongSaveMetadataResponseData {
-    @Field(() => SongItem)
-        song: SongItem
+export class RegisterResponseData {
+    @Field(() => String)
+        id: string
+
+    @Field(() => String)
+        username: string
+
+    @Field(() => String)
+        email: string
 }
 
 @ObjectType()
-export class SongSaveMetadataResponse extends AbstractGraphQLResponse {
-    @Field(() => SongSaveMetadataResponseData)
-        data: SongSaveMetadataResponseData
+export class RegisterResponse extends AbstractGraphQLResponse {
+    @Field(() => RegisterResponseData)
+        data: RegisterResponseData
 }

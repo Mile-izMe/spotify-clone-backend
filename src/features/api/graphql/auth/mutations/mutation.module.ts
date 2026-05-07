@@ -9,8 +9,8 @@ import {
     LoginService,
 } from "./login"
 import {
-    SongSaveMetadataHandler,
-    SongSaveMetadataService,
+    RegisterHandler,
+    RegisterService,
 } from "./register"
 import {
     MutationsConfigurableModuleClass 
@@ -26,13 +26,13 @@ import {
         AuthService,
         LoginHandler,
         LoginService,
-        SongSaveMetadataHandler,
-        SongSaveMetadataService,
+        RegisterHandler,
+        RegisterService,
     ],
     exports: [
         AuthService,
         LoginService,
-        SongSaveMetadataService,
+        RegisterService,
     ]
 })
 export class MutationsModule extends MutationsConfigurableModuleClass {}

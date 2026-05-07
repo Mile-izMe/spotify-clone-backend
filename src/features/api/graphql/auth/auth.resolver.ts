@@ -9,16 +9,16 @@ import {
     LoginService
 } from "./mutations/login"
 import {
-    SongSaveMetadataRequest,
-    SongSaveMetadataResponse,
-    SongSaveMetadataService,
+    RegisterRequest,
+    RegisterResponse,
+    RegisterService,
 } from "./mutations/register"
 
 @Resolver()
 export class AuthResolver {
     constructor(
         private readonly loginService: LoginService,
-        private readonly songSaveMetadataService: SongSaveMetadataService,
+        private readonly registerService: RegisterService,
     ) { }
 
     /**
@@ -55,28 +55,28 @@ export class AuthResolver {
      * Register
      */
     @Mutation(
-        () => SongSaveMetadataResponse,
+        () => RegisterResponse,
         {
-            name: "songSaveMetadata",
-            description: "Creates a song record from the uploaded file key and metadata.",
+            name: "register",
+            description: "Register a new user with email, password, and display name.",
         },
     )
-    async songSaveMetadata(
+    async register(
         @Args(
             "request",
             {
-                description: "Request containing the uploaded key and song metadata.",
+                description: "User registration details.",
             },
         )
-            request: SongSaveMetadataRequest,
-    ): Promise<SongSaveMetadataResponse> {
-        const data = await this.songSaveMetadataService.execute({
+            request: RegisterRequest,
+    ): Promise<RegisterResponse> {
+        const data = await this.registerService.execute({
             request,
         })
 
         return {
             success: true,
-            message: "Song metadata saved successfully",
+            message: "User registered successfully",
             data,
         }
     }

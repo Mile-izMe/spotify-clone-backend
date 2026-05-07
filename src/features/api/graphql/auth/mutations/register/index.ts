@@ -1,4 +1,4 @@
-export * from "./song-save-metadata.command"
-export * from "./song-save-metadata.handler"
-export * from "./song-save-metadata.service"
+export * from "./register.command"
+export * from "./register.handler"
+export * from "./register.service"
 export * from "./types"
