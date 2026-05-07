@@ -21,7 +21,7 @@ export class RegisterService {
     async execute(
         params: RegisterParams,
     ): Promise<RegisterResponseData> {
-        return this.commandBus.execute(
+        return this.commandBus.execute( 
             new RegisterCommand(params),
         )
     }

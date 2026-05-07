@@ -30,9 +30,17 @@ export const envConfig = () => ({
                 key: "JWT_AT_SECRET",
                 defaultValue: "melody_stream_access_token_secret",
             }),
+            atExpiration: parseEnvMs({
+                key: "JWT_AT_EXPIRATION",
+                defaultValue: "15m",
+            }),
             rtSecret: parseEnvString({
                 key: "JWT_RT_SECRET",
                 defaultValue: "melody_stream_refresh_token_secret",
+            }),
+            rtExpiration: parseEnvMs({
+                key: "JWT_RT_EXPIRATION",
+                defaultValue: "7d",
             }),
         }
     },
