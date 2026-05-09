@@ -24,7 +24,7 @@ import {
 
 /** Internal shape of the transformed GraphQL response (data, message, success, error). */
 interface GraphQLResponse<T = unknown> {
-    data?: T
+    data?: T | null
     message: string
     success: boolean
     error?: string
@@ -89,6 +89,7 @@ implements NestInterceptor<T, GraphQLResponse<T>> {
             catchError((err) => {
                 return new Observable<GraphQLResponse<T>>((observer) => {
                     observer.next({
+                        data: null,
                         success: false,
                         message: err?.message ?? "Internal server error",
                         error: err?.name ?? "Error",

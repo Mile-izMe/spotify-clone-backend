@@ -6,8 +6,7 @@ import {
     Locale,
 } from "@modules/databases"
 import {
-    UseGuards,
-    UseInterceptors,
+    UseInterceptors
 } from "@nestjs/common"
 import {
     Args,
@@ -33,13 +32,9 @@ import {
     SongsResponse,
     SongsResponseData,
 } from "./queries/songs/types"
-import {
-    CheckPermissions,
-    JwtAuthGuard, PermissionsGuard 
-} from "@modules/common"
 
 @Resolver()
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+// @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class SongsResolver {
     constructor(
         private readonly songsService: GetSongsService,
@@ -62,7 +57,7 @@ export class SongsResolver {
             description: "Lists songs with cursor pagination (and page fallback).",
         },
     )
-    @CheckPermissions("song:read")
+    // @CheckPermissions("song:read")
     async execute(
         @Args(
             "request",

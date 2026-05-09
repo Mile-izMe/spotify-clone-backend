@@ -13,12 +13,18 @@ import {
     RegisterResponse,
     RegisterService,
 } from "./mutations/register"
+import {
+    RefreshTokenRequest, 
+    RefreshTokenResponse, 
+    RefreshTokenService
+} from "./mutations/refresh-token"
 
 @Resolver()
 export class AuthResolver {
     constructor(
         private readonly loginService: LoginService,
         private readonly registerService: RegisterService,
+        private readonly refreshTokenService: RefreshTokenService,
     ) { }
 
     /**
@@ -77,6 +83,36 @@ export class AuthResolver {
         return {
             success: true,
             message: "User registered successfully",
+            data,
+        }
+    }
+
+    /**
+    * Refresh Token
+    */
+    @Mutation(
+        () => RefreshTokenResponse,
+        {
+            name: "refreshToken",
+            description: "Obtain a new access token using a valid refresh token.",
+        },
+    )
+    async refreshToken(
+        @Args(
+            "request",
+            {
+                description: "Refresh token and device identifier for token rotation.",
+            },
+        )
+            request: RefreshTokenRequest,
+    ): Promise<RefreshTokenResponse> {
+        const data = await this.refreshTokenService.execute({
+            request,
+        })
+
+        return {
+            success: true,
+            message: "Token refreshed successfully",
             data,
         }
     }

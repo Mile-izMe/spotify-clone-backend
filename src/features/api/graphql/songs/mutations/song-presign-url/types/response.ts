@@ -25,6 +25,9 @@ export class SongPresignUrlResponseData {
 
 @ObjectType()
 export class SongPresignUrlResponse extends AbstractGraphQLResponse {
-    @Field(() => SongPresignUrlResponseData)
-        data: SongPresignUrlResponseData
+    @Field(() => SongPresignUrlResponseData,
+        {
+            nullable: true,
+        })
+        data?: SongPresignUrlResponseData | null
 }

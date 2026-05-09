@@ -57,12 +57,15 @@ export class SongsResponseDataObject {
 
 @ObjectType()
 export class SongsResponse extends AbstractGraphQLResponse {
-    @Field(() => SongsResponseDataObject)
-        data: SongsResponseDataObject
+    @Field(() => SongsResponseDataObject,
+        {
+            nullable: true,
+        })
+        data?: SongsResponseDataObject | null
 }
 
 export interface SongsResponseData {
-    count: number
+    count: number 
     cursor?: string
     data: Array<SongItem>
 }

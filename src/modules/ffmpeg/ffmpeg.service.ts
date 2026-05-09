@@ -13,8 +13,8 @@ export class FfmpegService {
         "192k"]
 
     /**
-   * Get Metadata of song (Duration, Bitrate...)
-   */
+    * Get Metadata of song (Duration, Bitrate...)
+    */
     async getMetadata(inputPath: string): Promise<ffmpeg.FfprobeData> {
         return new Promise((resolve, reject) => {
             ffmpeg.ffprobe(inputPath,
@@ -26,8 +26,8 @@ export class FfmpegService {
     }
 
     /**
-   * Transcode file into HLS format (.m3u8) to support Adaptive Streaming -> For media
-   */
+    * Transcode file into HLS format (.m3u8) to support Adaptive Streaming -> For media
+    */
     async convertToHls(inputPath: string, outputDir: string): Promise<string> {
         return this.convertToHlsNew(inputPath,
             outputDir)

@@ -25,6 +25,9 @@ export class RefreshTokenResponseData {
 
 @ObjectType()
 export class RefreshTokenResponse extends AbstractGraphQLResponse {
-    @Field(() => RefreshTokenResponseData)
-        data: RefreshTokenResponseData
+    @Field(() => RefreshTokenResponseData,
+        {
+            nullable: true,
+        })
+        data?: RefreshTokenResponseData | null
 }

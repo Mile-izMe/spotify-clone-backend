@@ -17,6 +17,9 @@ export class SongSaveMetadataResponseData {
 
 @ObjectType()
 export class SongSaveMetadataResponse extends AbstractGraphQLResponse {
-    @Field(() => SongSaveMetadataResponseData)
-        data: SongSaveMetadataResponseData
+    @Field(() => SongSaveMetadataResponseData,
+        {
+            nullable: true,
+        })
+        data?: SongSaveMetadataResponseData | null
 }

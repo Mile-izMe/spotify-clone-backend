@@ -25,6 +25,9 @@ export class LoginResponseData {
 
 @ObjectType()
 export class LoginResponse extends AbstractGraphQLResponse {
-    @Field(() => LoginResponseData)
-        data: LoginResponseData
+    @Field(() => LoginResponseData,
+        {
+            nullable: true,
+        })
+        data?: LoginResponseData | null
 }

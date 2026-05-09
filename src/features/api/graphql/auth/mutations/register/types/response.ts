@@ -20,6 +20,9 @@ export class RegisterResponseData {
 
 @ObjectType()
 export class RegisterResponse extends AbstractGraphQLResponse {
-    @Field(() => RegisterResponseData)
-        data: RegisterResponseData
+    @Field(() => RegisterResponseData,
+        {
+            nullable: true,
+        })
+        data?: RegisterResponseData | null
 }
