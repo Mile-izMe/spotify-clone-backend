@@ -73,6 +73,7 @@ export class LoginHandler
         // 3. Generate and return token pair
         const result = await this.authService.generateTokenPair(
             user.id,
+            user.username,
             user.roles,
             user.permissions,
             request.deviceId,

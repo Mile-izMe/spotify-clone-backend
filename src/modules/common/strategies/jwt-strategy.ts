@@ -16,10 +16,16 @@ import {
 import {
     JwtPayload 
 } from "@features/api/graphql/auth/types"
+import {
+    RequestContextService 
+} from "@modules/context/request-context.service"
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    constructor(private readonly redisService: RedisService) {
+    constructor(
+        private readonly redisService: RedisService, 
+        private readonly requestContext: RequestContextService
+    ) {
         super({
             // Extract token from header Authorization: Bearer <token>
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -37,8 +43,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         // This key set in logout func with TTL as the time left of AT
         const isBlacklisted = await this.redisService.get(`bl_${payload.sub}`)
         if (isBlacklisted) {
-            throw new UnauthorizedException("Token đã bị vô hiệu hóa (Blacklisted)")
+            throw new UnauthorizedException("Token has been deactivated (Blacklisted)")
         }
+
+        const user = {
+            id: payload.sub,
+            username: payload.username
+        }
+
+        this.requestContext.setUser(user)
 
         // Return the user object for subsequent guards to use
         // req.user will have the structure of JwtPayload

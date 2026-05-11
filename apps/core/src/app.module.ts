@@ -44,11 +44,19 @@ import {
 } from "@modules/websocket"
 import {
     Module,
-    ValidationPipe
+    ValidationPipe,
+    NestModule,
+    MiddlewareConsumer,
 } from "@nestjs/common"
 import {
     APP_PIPE
 } from "@nestjs/core"
+import {
+    RequestContextService 
+} from "@modules/context/request-context.service"
+import {
+    ContextMiddleware 
+} from "@modules/context/context.middleware"
 import {
     CqrsModule
 } from "@nestjs/cqrs"
@@ -192,7 +200,12 @@ import {
                 provide: APP_PIPE,
                 useClass: ValidationPipe,
             },
+            RequestContextService,
         ],
     }
 )
-export class AppModule {}
+export class AppModule implements NestModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer.apply(ContextMiddleware).forRoutes("*")
+    }
+}

@@ -36,13 +36,14 @@ export class AuthService {
     * GENERATE TOKEN PAIR (Rotation support)
     */
     async generateTokenPair(
-        userId: string, 
-        roles: string[], 
-        permissions: string[], 
+        userId: string,
+        username: string,
+        roles: string[],
+        permissions: string[],
         deviceId: string
     ) {
         const payload: JwtPayload = {
-            sub: userId, roles, permissions, deviceId 
+            sub: userId, username, roles, permissions, deviceId 
         }
 
         // Access Token: Short lived (Ex: 15m) to lower risk when token being leaked

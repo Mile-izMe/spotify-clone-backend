@@ -32,9 +32,9 @@ model User {
   refreshTokens RefreshToken[]
 
   createdAt DateTime   @map("created_at") @default(now())
-  createBy  String?    @map("create_by")
+  createBy  String?    @map("created_by")
   updatedAt DateTime   @map("updated_at") @default(now())
-  updateBy  String?    @map("update_by")
+  updateBy  String?    @map("updated_by")
 
   @@map("users")
 }
@@ -60,9 +60,9 @@ model Role {
   permissions RolePermission[]
   
   createdAt DateTime @map("created_at") @default(now())
-  createBy  String?  @map("create_by")
+  createBy  String?  @map("created_by")
   updatedAt DateTime @map("updated_at") @default(now())
-  updateBy  String?  @map("update_by")
+  updateBy  String?  @map("updated_by")
 
   @@map("roles")
 }
@@ -73,9 +73,9 @@ model Permission {
   roles     RolePermission[]
   
   createdAt DateTime @map("created_at") @default(now())
-  createBy  String?  @map("create_by")
+  createBy  String?  @map("created_by")
   updatedAt DateTime @map("updated_at") @default(now())
-  updateBy  String?  @map("update_by")
+  updateBy  String?  @map("updated_by")
 
   @@map("permissions")
 }
@@ -101,9 +101,9 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id])
 
   createdAt DateTime @map("created_at") @default(now())
-  createBy  String?  @map("create_by")
+  createBy  String?  @map("created_by")
   updatedAt DateTime @map("updated_at") @default(now())
-  updateBy  String?  @map("update_by")
+  updateBy  String?  @map("updated_by")
 
   @@map("refresh_tokens")
 }
@@ -122,9 +122,9 @@ model Song {
   playlists    PlaylistSong[] // Many-to-Many relationship with Playlist
 
   createdAt    DateTime   @map("created_at") @default(now())
-  createBy     String?    @map("create_by")
+  createBy     String?    @map("created_by")
   updatedAt    DateTime   @map("updated_at") @default(now())
-  updateBy     String?    @map("update_by")
+  updateBy     String?    @map("updated_by")
 
   @@map("songs")
 }
@@ -140,9 +140,9 @@ model Playlist {
   songs     PlaylistSong[]
 
   createdAt DateTime @map("created_at") @default(now())
-  createBy  String?  @map("create_by")
+  createBy  String?  @map("created_by")
   updatedAt DateTime @map("updated_at") @default(now())
-  updateBy  String?  @map("update_by")
+  updateBy  String?  @map("updated_by")
 
   @@map("playlists")
 }
