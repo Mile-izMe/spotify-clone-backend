@@ -68,7 +68,7 @@ export class AuthService {
 
     /**
     * LOGOUT
-     */
+    */
     async logout(userId: string, deviceId: string) {
         const redisKey = createNamespacedRedisKey(
             RedisKeyPrefix.RefreshToken,

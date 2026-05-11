@@ -40,6 +40,9 @@ import {
     S3Module
 } from "@modules/s3"
 import {
+    WebsocketModule 
+} from "@modules/websocket"
+import {
     Module,
     ValidationPipe
 } from "@nestjs/common"
@@ -65,12 +68,9 @@ import {
             HashModule.register({
                 isGlobal: true,
             }),
-            // /** Axios module. */
-            // AxiosModule.register(
-            //     {
-            //         isGlobal: true,
-            //     }
-            // ),
+            WebsocketModule.register({
+                isGlobal: true,
+            }),
             // /** Winston module. */
             // WinstonModule.register(
             //     {
