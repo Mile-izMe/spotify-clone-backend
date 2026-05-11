@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+    ICQRSHandler,
+} from "@modules/cqrs"
+import {
     InjectRedis
 } from "@modules/native"
 import {
@@ -44,7 +47,9 @@ export class WebsocketService implements OnModuleInit, OnModuleDestroy {
 
         @InjectRedis(RedisInstanceKey.Adapter)
         private readonly redisClient: AnyRedis
-    ) {}
+    ) {
+        ICQRSHandler.setWebsocketPublisher(this)
+    }
 
     setServer(server: Server) {
         this.server = server
@@ -140,6 +145,8 @@ export class WebsocketService implements OnModuleInit, OnModuleDestroy {
 
     async onModuleDestroy() {
         try {
+            ICQRSHandler.setWebsocketPublisher(undefined)
+
             if (this.sub) {
                 await (this.sub as unknown as RedisClientType).quit()
             }

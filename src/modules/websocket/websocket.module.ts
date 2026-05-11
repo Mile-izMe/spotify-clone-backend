@@ -10,11 +10,15 @@ import {
 import {
     AppWebSocketGateway 
 } from "./gateway"
+import {
+    JwtService 
+} from "@nestjs/jwt"
 
 @Module({
     providers: [
         WebsocketService,
-        AppWebSocketGateway
+        AppWebSocketGateway,
+        JwtService
     ],
     exports: [
         WebsocketService,

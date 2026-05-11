@@ -8,6 +8,10 @@ import {
     SongPresignUrlService 
 } from "./song-presign-url"
 import {
+    SongUpdateHandler,
+    SongUpdateService,
+} from "./song-update"
+import {
     SongSaveMetadataHandler,
     SongSaveMetadataService,
 } from "./song-save-metadata"
@@ -24,11 +28,14 @@ import {
     providers: [
         SongPresignUrlHandler,
         SongPresignUrlService,
+        SongUpdateHandler,
+        SongUpdateService,
         SongSaveMetadataHandler,
         SongSaveMetadataService,
     ],
     exports: [
         SongPresignUrlService,
+        SongUpdateService,
         SongSaveMetadataService,
     ]
 })

@@ -25,6 +25,11 @@ import {
     SongSaveMetadataService,
 } from "./mutations/song-save-metadata"
 import {
+    SongUpdateRequest,
+    SongUpdateResponse,
+    SongUpdateService,
+} from "./mutations/song-update"
+import {
     GetSongsService,
 } from "./queries/songs/songs.service"
 import {
@@ -40,6 +45,7 @@ export class SongsResolver {
         private readonly songsService: GetSongsService,
         private readonly songPresignUrlService: SongPresignUrlService,
         private readonly songSaveMetadataService: SongSaveMetadataService,
+        private readonly songUpdateService: SongUpdateService,
     ) { }
 
     /**
@@ -130,6 +136,36 @@ export class SongsResolver {
         return {
             success: true,
             message: "Song metadata saved successfully",
+            data,
+        }
+    }
+
+    /**
+     * Updates song fields and emits a songs.updated event.
+     */
+    @Mutation(
+        () => SongUpdateResponse,
+        {
+            name: "songUpdate",
+            description: "Updates song fields and publishes a songs.updated WebSocket event.",
+        },
+    )
+    async songUpdate(
+        @Args(
+            "request",
+            {
+                description: "Request containing the song id and fields to update.",
+            },
+        )
+            request: SongUpdateRequest,
+    ): Promise<SongUpdateResponse> {
+        const data = await this.songUpdateService.execute({
+            request,
+        })
+
+        return {
+            success: true,
+            message: "Song updated successfully",
             data,
         }
     }

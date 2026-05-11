@@ -40,7 +40,7 @@ import {
     S3Module
 } from "@modules/s3"
 import {
-    WebsocketModule 
+    WebsocketModule
 } from "@modules/websocket"
 import {
     Module,
