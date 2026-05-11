@@ -4,6 +4,7 @@ import {
 
 export interface SongsQueryParams {
     request: SongsRequest
+    userId?: string
 }
 
 export class SongsQuery {

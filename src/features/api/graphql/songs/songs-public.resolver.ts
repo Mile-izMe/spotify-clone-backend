@@ -21,6 +21,9 @@ import {
     SongsResponse,
     SongsResponseData,
 } from "./queries/songs/types"
+import {
+    CurrentUser 
+} from "@modules/common"
 
 @Resolver()
 export class SongsPublicResolver {
@@ -51,10 +54,12 @@ export class SongsPublicResolver {
             },
         )
             request: SongsRequest,
+        @CurrentUser("userId") userId?: string,
     ): Promise<SongsResponseData> {
         return this.songsService.execute(
             {
                 request,
+                userId,
             },
         )
     }

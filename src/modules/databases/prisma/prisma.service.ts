@@ -35,7 +35,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             query: {
                 $allModels: {
                     $allOperations: async ({
-                        model, operation, args, query 
+                        operation, args, query 
                     }) => {
                         if (operation === "findMany") {
                             // Exclude soft-deleted records by default
@@ -111,7 +111,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
                             }
                         }
 
-                        console.debug(`Prisma Operation: ${operation} on ${model}`)
+                        // console.debug(`Prisma Operation: ${operation} on ${model}`)
                         return query(args)
                     }
                 }

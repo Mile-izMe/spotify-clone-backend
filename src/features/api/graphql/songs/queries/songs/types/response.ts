@@ -33,6 +33,12 @@ export class SongItem {
         })
         duration?: number | null
 
+    @Field(() => Boolean,
+        {
+            defaultValue: false 
+        })
+        isEditable: boolean
+
     @Field(() => Date)
         createdAt: Date
 

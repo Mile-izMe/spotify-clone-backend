@@ -60,6 +60,9 @@ import {
 import {
     CqrsModule
 } from "@nestjs/cqrs"
+import {
+    ContextModule 
+} from "@modules/context/context.module"
 /**
  * The main module for the application.
  */
@@ -187,13 +190,13 @@ import {
                 {
                     isGlobal: true,
                 }
+            ),
+            /** Context module. */
+            ContextModule.register(
+                {
+                    isGlobal: true,
+                }
             )
-            // /** Event Bus module. */
-            // EventBusModule.register(
-            //     {
-            //         isGlobal: true,
-            //     }
-            // ),
         ],
         providers: [
             {
@@ -206,6 +209,6 @@ import {
 )
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
-        consumer.apply(ContextMiddleware).forRoutes("*")
+        consumer.apply(ContextMiddleware).forRoutes("*path")
     }
 }

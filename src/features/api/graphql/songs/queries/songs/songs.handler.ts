@@ -44,16 +44,20 @@ export class GetSongsHandler
     protected override async process(
         query: SongsQuery,
     ): Promise<SongsResponseData> {
+        const currentUserId = query.params.userId
+
         const filters = query.params.request.filters
         const limit = normalizeLimit(filters.limit)
         const pageNumber = normalizePageNumber(filters.pageNumber)
         const cursorId = decodeCursor(filters.cursor)
+        
         const where: Prisma.SongWhereInput = {
             ...buildSongWhere(filters.search),
             audioUrl: {
                 contains: "playlist.m3u8",
             },
         }
+
         const orderBy = buildSongOrderBy(filters.sorts)
         const skip = cursorId
             ? 1
@@ -87,6 +91,7 @@ export class GetSongsHandler
             return {
                 ...song,
                 audioUrl: `/api/s3/proxy/playlist/${song.id}`,
+                isEditable: currentUserId ? song.createdBy === currentUserId : false,
             }
         }))
 
