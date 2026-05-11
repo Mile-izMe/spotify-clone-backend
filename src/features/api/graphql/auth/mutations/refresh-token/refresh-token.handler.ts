@@ -11,6 +11,10 @@ import {
     RedisService
 } from "@modules/native"
 import {
+    createNamespacedRedisKey,
+    RedisKeyPrefix,
+} from "@modules/native/redis"
+import {
     ForbiddenException,
     Injectable,
     UnauthorizedException,
@@ -69,14 +73,28 @@ export class RefreshTokenHandler
             const decoded = this.jwtService.decode(request.refreshToken) as JwtPayload
             if (!decoded) throw new UnauthorizedException()
         
-            const redisKey = `rt:${decoded.sub}:${request.deviceId}`
+            const redisKey = createNamespacedRedisKey(
+                RedisKeyPrefix.RefreshToken,
+                decoded.sub,
+                request.deviceId,
+            )
             const currentRtInRedis = await this.redisService.get(redisKey)
-        
+
             // REUSE DETECTION
             // If token send not match with the "latest" token in Redis
             // Meaning the old RT has been used before -> There's an attempt to reuse a leaked RT
             if (currentRtInRedis !== request.refreshToken) {
                 await this.redisService.del(redisKey) // Immediately revoke
+                await this.prisma.refreshToken.updateMany({
+                    where: {
+                        userId: decoded.sub,
+                        deviceId: request.deviceId,
+                        isRevoked: false
+                    },
+                    data: {
+                        isRevoked: true,
+                    }
+                })
                 throw new ForbiddenException("Access Denied - Potential Security Breach")
             }
         

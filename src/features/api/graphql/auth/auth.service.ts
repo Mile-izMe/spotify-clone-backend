@@ -8,6 +8,10 @@ import {
     RedisService
 } from "@modules/native"
 import {
+    createNamespacedRedisKey,
+    RedisKeyPrefix,
+} from "@modules/native/redis"
+import {
     Injectable
 } from "@nestjs/common"
 import {
@@ -66,7 +70,11 @@ export class AuthService {
     * LOGOUT
      */
     async logout(userId: string, deviceId: string) {
-        const redisKey = `rt:${userId}:${deviceId}`
+        const redisKey = createNamespacedRedisKey(
+            RedisKeyPrefix.RefreshToken,
+            userId,
+            deviceId,
+        )
 
         await Promise.all([
             // Delete in Redis
@@ -98,9 +106,17 @@ export class AuthService {
         })
 
         if (activeTokens.length > 0) {
-            const redisDeletePromises = activeTokens.map(t => 
-                this.redisService.del(`rt:${userId}:${t.deviceId}`)
-            )
+            const redisDeletePromises = activeTokens.flatMap(t => {
+                if (!t.deviceId) {
+                    return []
+                }
+
+                return this.redisService.del(createNamespacedRedisKey(
+                    RedisKeyPrefix.RefreshToken,
+                    userId,
+                    t.deviceId,
+                ))
+            })
             await Promise.all(redisDeletePromises)
         }
 
@@ -122,7 +138,11 @@ export class AuthService {
      * @param refreshToken 
      */
     async updateRefreshTokenData(userId: string, deviceId: string, refreshToken: string) {
-        const redisKey = `rt:${userId}:${deviceId}`
+        const redisKey = createNamespacedRedisKey(
+            RedisKeyPrefix.RefreshToken,
+            userId,
+            deviceId,
+        )
         const ttl = envConfig().auth.jwt.rtExpiration 
         const hashedToken = this.hashToken(refreshToken)
 
@@ -131,22 +151,26 @@ export class AuthService {
             this.redisService.set(redisKey, refreshToken, ttl),
 
             // Update DB record for audit/history (Optional, can be used for monitoring or manual revocation)
-            this.prisma.refreshToken.upsert({
+            this.prisma.refreshToken.updateMany({
                 where: {
-                    tokenHash: hashedToken
+                    userId: userId,
+                    deviceId: deviceId,
+                    isRevoked: false
                 },
-                update: {
-                    tokenHash: hashedToken,
-                    isRevoked: false,
-                    expiryTime: ttl,
-                },
-                create: {
-                    userId,
-                    tokenHash: hashedToken,
-                    deviceId,
-                    expiryTime: ttl,
+                data: {
+                    isRevoked: true 
                 }
-            })
+            }),
+
+            this.prisma.refreshToken.create({
+                data: {
+                    userId,
+                    deviceId,
+                    tokenHash: hashedToken,
+                    expiryTime: ttl,
+                    isRevoked: false
+                }
+            }),
         ])
     }
 
