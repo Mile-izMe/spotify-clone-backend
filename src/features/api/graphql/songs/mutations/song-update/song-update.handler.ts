@@ -1,9 +1,13 @@
 import {
-    Prisma,
-} from "@prisma/client"
+    ICQRSHandler,
+} from "@modules/cqrs"
 import {
-    Injectable,
+    PrismaService,
+} from "@modules/databases"
+import {
     BadRequestException,
+    ForbiddenException,
+    Injectable,
     NotFoundException,
 } from "@nestjs/common"
 import {
@@ -11,11 +15,8 @@ import {
     ICommandHandler,
 } from "@nestjs/cqrs"
 import {
-    PrismaService,
-} from "@modules/databases"
-import {
-    ICQRSHandler,
-} from "@modules/cqrs"
+    Prisma,
+} from "@prisma/client"
 import {
     SongUpdateCommand,
 } from "./song-update.command"
@@ -39,16 +40,24 @@ export class SongUpdateHandler
     ): Promise<SongUpdateResponseData> {
         const {
             request,
+            userId
         } = command.params
 
         const existingSong = await this.prisma.song.findUnique({
             where: {
                 id: request.id,
             },
+            select: {
+                createdBy: true,
+            }
         })
 
         if (!existingSong) {
             throw new NotFoundException("Song not found")
+        }
+
+        if (existingSong.createdBy !== userId) {
+            throw new ForbiddenException("You do not have permission to edit this song")
         }
 
         const data: Prisma.SongUpdateInput = {

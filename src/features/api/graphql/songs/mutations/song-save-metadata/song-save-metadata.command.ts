@@ -4,6 +4,7 @@ import {
 
 export interface SongSaveMetadataParams {
     request: SongSaveMetadataRequest
+    userId: string
 }
 
 export class SongSaveMetadataCommand {

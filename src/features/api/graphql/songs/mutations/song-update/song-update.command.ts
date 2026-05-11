@@ -4,6 +4,7 @@ import {
 
 export interface SongUpdateParams {
     request: SongUpdateRequest
+    userId: string
 }
 
 export class SongUpdateCommand {

@@ -30,15 +30,30 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             }),
         })
 
-        // Prisma middleware: automatically set createBy / updateBy if available in request context
+        // Prisma middleware: automatically set createdBy / updatedBy / deletedBy if available in request context
         this.extendedClient = this.$extends({
             query: {
                 $allModels: {
                     $allOperations: async ({
                         model, operation, args, query 
                     }) => {
+                        if (operation === "findMany") {
+                            // Exclude soft-deleted records by default
+                            args.where = {
+                                ...args.where, deletedAt: null 
+                            }
+                            return query(args)
+                        }
+                        if (operation === "findFirst") {
+                            args.where = {
+                                ...args.where, deletedAt: null 
+                            }
+                            return query(args)
+                        }
+
+
                         const user = this.requestContext.getUser()
-                        const username = user?.username
+                        const username = user?.id
 
                         if (username) {
                             const prismaArgs = args as PrismaArgsWithData
@@ -48,13 +63,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
                                     if (Array.isArray(prismaArgs.data)) {
                                         // createMany: data là một mảng
                                         prismaArgs.data.forEach((item) => {
-                                            if ("createBy" in item && !item.createBy) item.createBy = username
-                                            if ("updateBy" in item && !item.updateBy) item.updateBy = username
+                                            if ("createdBy" in item && !item.createdBy) item.createdBy = username
+                                            if ("updatedBy" in item && !item.updatedBy) item.updatedBy = username
                                         })
                                     } else {
                                         // create: data là một object
-                                        if ("createBy" in prismaArgs.data && !prismaArgs.data.createBy) prismaArgs.data.createBy = username
-                                        if ("updateBy" in prismaArgs.data && !prismaArgs.data.updateBy) prismaArgs.data.updateBy = username
+                                        if ("createdBy" in prismaArgs.data && !prismaArgs.data.createdBy) prismaArgs.data.createdBy = username
+                                        if ("updatedBy" in prismaArgs.data && !prismaArgs.data.updatedBy) prismaArgs.data.updatedBy = username
                                     }
                                 }
                             }
@@ -68,13 +83,34 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
                                 const updateData = operation === "upsert" ? prismaArgs.update : prismaArgs.data
                                 
                                 if (updateData && !Array.isArray(updateData)) {
-                                    if ("updateBy" in updateData) {
-                                        updateData.updateBy = username
+                                    if ("updatedBy" in updateData) {
+                                        updateData.updatedBy = username
+                                    }
+                                }
+                            }
+
+                            // DELETE
+                            if (operation === "delete" || operation === "deleteMany") {
+                                if (prismaArgs.data) {
+                                    if (Array.isArray(prismaArgs.data)) {
+                                        // deleteMany with data (soft delete)
+                                        prismaArgs.data.forEach((item) => {
+                                            if ("deletedBy" in item && !item.deletedBy) {
+                                                item.deletedBy = username
+                                                item.deletedAt = new Date()
+                                            }
+                                        })
+                                    } else {
+                                        // delete with data (soft delete)
+                                        if ("deletedBy" in prismaArgs.data && !prismaArgs.data.deletedBy) {
+                                            prismaArgs.data.deletedBy = username
+                                            prismaArgs.data.deletedAt = new Date()
+                                        }
                                     }
                                 }
                             }
                         }
-                        
+
                         console.debug(`Prisma Operation: ${operation} on ${model}`)
                         return query(args)
                     }

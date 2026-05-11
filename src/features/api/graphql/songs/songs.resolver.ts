@@ -1,18 +1,15 @@
 import {
-    GraphQLSuccessMessage,
-    GraphQLTransformInterceptor,
-} from "@modules/api"
+    CheckPermissions,
+    CurrentUser,
+    JwtAuthGuard, PermissionsGuard
+} from "@modules/common"
 import {
-    Locale,
-} from "@modules/databases"
-import {
-    UseInterceptors
+    UseGuards
 } from "@nestjs/common"
 import {
     Args,
     Mutation,
-    Query,
-    Resolver,
+    Resolver
 } from "@nestjs/graphql"
 import {
     SongPresignUrlRequest,
@@ -29,57 +26,16 @@ import {
     SongUpdateResponse,
     SongUpdateService,
 } from "./mutations/song-update"
-import {
-    GetSongsService,
-} from "./queries/songs/songs.service"
-import {
-    SongsRequest,
-    SongsResponse,
-    SongsResponseData,
-} from "./queries/songs/types"
 
 @Resolver()
-// @UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class SongsResolver {
     constructor(
-        private readonly songsService: GetSongsService,
         private readonly songPresignUrlService: SongPresignUrlService,
         private readonly songSaveMetadataService: SongSaveMetadataService,
         private readonly songUpdateService: SongUpdateService,
-    ) { }
-
-    /**
-        * Lists songs with cursor-first pagination and page fallback.
-     */
-    @GraphQLSuccessMessage({
-        [Locale.En]: "Songs fetched successfully",
-        [Locale.Vi]: "Lấy danh sách bài hát thành công",
-    })
-    @UseInterceptors(GraphQLTransformInterceptor)
-    @Query(
-        () => SongsResponse,
-        {
-            name: "songs",
-            description: "Lists songs with cursor pagination (and page fallback).",
-        },
-    )
-    // @CheckPermissions("song:read")
-    async execute(
-        @Args(
-            "request",
-            {
-                description: "Content id, pagination, and sort request.",
-            },
-        )
-            request: SongsRequest,
-    ): Promise<SongsResponseData> {
-        return this.songsService.execute(
-            {
-                request,
-            },
-        )
-    }
-
+    ) {}
+    
     /**
      * Creates a presigned upload URL for song audio.
      */
@@ -113,6 +69,7 @@ export class SongsResolver {
     /**
      * Saves song metadata and the uploaded file key into database.
      */
+    @CheckPermissions("song:create")
     @Mutation(
         () => SongSaveMetadataResponse,
         {
@@ -128,9 +85,11 @@ export class SongsResolver {
             },
         )
             request: SongSaveMetadataRequest,
+        @CurrentUser("userId") userId: string,
     ): Promise<SongSaveMetadataResponse> {
         const data = await this.songSaveMetadataService.execute({
             request,
+            userId,
         })
 
         return {
@@ -143,6 +102,7 @@ export class SongsResolver {
     /**
      * Updates song fields and emits a songs.updated event.
      */
+    @CheckPermissions("song:update")
     @Mutation(
         () => SongUpdateResponse,
         {
@@ -158,9 +118,11 @@ export class SongsResolver {
             },
         )
             request: SongUpdateRequest,
+        @CurrentUser("userId") userId: string,
     ): Promise<SongUpdateResponse> {
         const data = await this.songUpdateService.execute({
             request,
+            userId,
         })
 
         return {

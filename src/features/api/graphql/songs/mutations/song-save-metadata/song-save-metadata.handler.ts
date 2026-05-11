@@ -38,6 +38,7 @@ export class SongSaveMetadataHandler
     ): Promise<SongSaveMetadataResponseData> {
         const {
             request,
+            userId,
         } = command.params
 
         const song = await this.prisma.song.create({
@@ -52,7 +53,7 @@ export class SongSaveMetadataHandler
 
         await this.enqueueProcessMusicJobService.enqueue({
             songId: song.id,
-            userId: request.userId,
+            userId: userId,
         })
 
         return {

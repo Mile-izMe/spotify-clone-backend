@@ -13,6 +13,9 @@ import {
 import {
     SongsResolver
 } from "./songs.resolver"
+import {
+    SongsPublicResolver 
+} from "./songs-public.resolver"
 
 /**
  * Module for the Songs.
@@ -24,6 +27,7 @@ import {
     ],
     providers: [
         SongsResolver,
+        SongsPublicResolver
     ]
 })
 export class SongsModule extends SongsConfigurableModuleClass {}
