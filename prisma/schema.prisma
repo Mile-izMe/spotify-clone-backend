@@ -94,7 +94,7 @@ model RefreshToken {
   id         String   @id @default(uuid())
   tokenHash  String   @map("token_hash") @unique
   userId     String   @map("user_id")
-  expiryDate DateTime @map("expiry_date")
+  expiryTime Int      @map("expiry_time")
   deviceId   String?  @map("device_id")
   isRevoked  Boolean  @map("is_revoked") @default(false)
 

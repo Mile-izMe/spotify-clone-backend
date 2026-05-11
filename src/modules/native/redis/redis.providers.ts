@@ -69,8 +69,10 @@ export const createRedisProvider = (key: RedisInstanceKey): Provider => ({
                     }),
                 },
             })
+            // ensure cluster is connected before returning
+            await cluster.connect()
             return cluster
-        }       
+        }
         const client = createClient({
             socket: {
                 host,
@@ -80,6 +82,8 @@ export const createRedisProvider = (key: RedisInstanceKey): Provider => ({
             ...(additionalOptions || {
             }),
         })
+        // connect client immediately so commands don't fail with ClientClosedError
+        await client.connect()
         return client
     },
 })

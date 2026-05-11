@@ -24,7 +24,7 @@ import {
     JwtService
 } from "@nestjs/jwt"
 import {
-    AuthService,
+    AuthService
 } from "../../auth.service"
 import {
     JwtPayload
@@ -35,6 +35,9 @@ import {
 import {
     RefreshTokenResponseData
 } from "./types"
+import {
+    PrismaService 
+} from "@modules/databases"
 
 @CommandHandler(RefreshTokenCommand)
 @Injectable()
@@ -45,7 +48,8 @@ export class RefreshTokenHandler
         private readonly jwtService: JwtService,
         private readonly queryBus: QueryBus,
         private readonly authService: AuthService,
-         private readonly redisService: RedisService,
+        private readonly prisma: PrismaService,
+        private readonly redisService: RedisService,
     ) {
         super()
     }
@@ -73,7 +77,6 @@ export class RefreshTokenHandler
             // Meaning the old RT has been used before -> There's an attempt to reuse a leaked RT
             if (currentRtInRedis !== request.refreshToken) {
                 await this.redisService.del(redisKey) // Immediately revoke
-                console.log(`Potential Refresh Token Reuse Attack detected for User: ${decoded.sub}`)
                 throw new ForbiddenException("Access Denied - Potential Security Breach")
             }
         
@@ -98,12 +101,21 @@ export class RefreshTokenHandler
             }
               
             // 4. Generate new token pair (rotate)
-            return this.authService.generateTokenPair(
+            const result = await this.authService.generateTokenPair(
                 user.id,
                 user.roles,
                 user.permissions,
                 request.deviceId,
             )
+
+            // 5. Update Redis & DB with new RT (Rotation)
+            await this.authService.updateRefreshTokenData(
+                user.id,
+                request.deviceId,
+                result.refreshToken,
+            )
+
+            return result
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "Unknown error"
             console.log(`Refresh failed: ${errorMessage}`)

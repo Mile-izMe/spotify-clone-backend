@@ -1,4 +1,10 @@
 import {
+    ICQRSHandler,
+} from "@modules/cqrs"
+import {
+    HashService,
+} from "@modules/hash/hash.service"
+import {
     Injectable,
     UnauthorizedException,
 } from "@nestjs/common"
@@ -8,24 +14,18 @@ import {
     QueryBus,
 } from "@nestjs/cqrs"
 import {
-    ICQRSHandler,
-} from "@modules/cqrs"
-import {
-    HashService,
-} from "@modules/hash/hash.service"
-import {
     AuthService,
 } from "../../auth.service"
 
+import {
+    GetUserByEmailQuery
+} from "@features/api/graphql/user/queries"
 import {
     LoginCommand,
 } from "./login.command"
 import {
     LoginResponseData,
 } from "./types"
-import {
-    GetUserByEmailQuery 
-} from "@features/api/graphql/user/queries"
 
 @CommandHandler(LoginCommand)
 @Injectable()
@@ -71,12 +71,21 @@ export class LoginHandler
         }
 
         // 3. Generate and return token pair
-        return this.authService.generateTokenPair(
+        const result = await this.authService.generateTokenPair(
             user.id,
             user.roles,
             user.permissions,
             request.deviceId,
         )
+
+        // 4. Handle refresh token
+        await this.authService.updateRefreshTokenData(
+            user.id,
+            request.deviceId,
+            result.refreshToken,
+        )
+
+        return result
     }
 
     //* Continue with send Email by emit to activate user (later)

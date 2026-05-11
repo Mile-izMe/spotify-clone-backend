@@ -1,16 +1,21 @@
 import {
+    PrismaService
+} from "@modules/databases"
+import {
     envConfig
 } from "@modules/env"
 import {
     RedisService
 } from "@modules/native"
 import {
-    Injectable,
-    Logger
+    Injectable
 } from "@nestjs/common"
 import {
     JwtService
 } from "@nestjs/jwt"
+import {
+    createHash
+} from "node:crypto"
 import {
     JwtPayload
 } from "./types/jwt"
@@ -20,8 +25,8 @@ export class AuthService {
     constructor(
         private readonly jwtService: JwtService,
         private readonly redisService: RedisService,
+        private readonly prisma: PrismaService
     ) {}
-    private readonly logger = new Logger(AuthService.name)
 
     /**
     * GENERATE TOKEN PAIR (Rotation support)
@@ -52,15 +57,6 @@ export class AuthService {
                 }),
         ])
 
-        // STORE & ROTATION IN REDIS
-        // Each device has 1 Refresh Token at 1 time
-        const redisKey = `rt:${userId}:${deviceId}`
-        await this.redisService.set(
-            redisKey,
-            rt,
-            envConfig().auth.jwt.rtExpiration
-        ) 
-
         return {
             accessToken: at, refreshToken: rt 
         }
@@ -70,6 +66,91 @@ export class AuthService {
     * LOGOUT
      */
     async logout(userId: string, deviceId: string) {
-        await this.redisService.del(`rt:${userId}:${deviceId}`)
+        const redisKey = `rt:${userId}:${deviceId}`
+
+        await Promise.all([
+            // Delete in Redis
+            this.redisService.del(redisKey),
+
+            // Mark as revoked in DB for audit/history
+            this.prisma.refreshToken.updateMany({
+                where: {
+                    userId,
+                    deviceId,
+                    isRevoked: false
+                },
+                data: {
+                    isRevoked: true
+                }
+            })
+        ])
+    }
+
+    async logoutAllDevices(userId: string) {
+        const activeTokens = await this.prisma.refreshToken.findMany({
+            where: {
+                userId,
+                isRevoked: false
+            },
+            select: {
+                deviceId: true 
+            }
+        })
+
+        if (activeTokens.length > 0) {
+            const redisDeletePromises = activeTokens.map(t => 
+                this.redisService.del(`rt:${userId}:${t.deviceId}`)
+            )
+            await Promise.all(redisDeletePromises)
+        }
+
+        await this.prisma.refreshToken.updateMany({
+            where: {
+                userId,
+                isRevoked: false
+            },
+            data: {
+                isRevoked: true,
+            }
+        })
+    }
+
+    /**
+     * Helper function to update refresh token data in both Redis and Database during token rotation
+     * @param userId 
+     * @param deviceId 
+     * @param refreshToken 
+     */
+    async updateRefreshTokenData(userId: string, deviceId: string, refreshToken: string) {
+        const redisKey = `rt:${userId}:${deviceId}`
+        const ttl = envConfig().auth.jwt.rtExpiration 
+        const hashedToken = this.hashToken(refreshToken)
+
+        await Promise.all([
+            // Update Redis with new RT and reset TTL (Check Reuse Detection)
+            this.redisService.set(redisKey, refreshToken, ttl),
+
+            // Update DB record for audit/history (Optional, can be used for monitoring or manual revocation)
+            this.prisma.refreshToken.upsert({
+                where: {
+                    tokenHash: hashedToken
+                },
+                update: {
+                    tokenHash: hashedToken,
+                    isRevoked: false,
+                    expiryTime: ttl,
+                },
+                create: {
+                    userId,
+                    tokenHash: hashedToken,
+                    deviceId,
+                    expiryTime: ttl,
+                }
+            })
+        ])
+    }
+
+    private hashToken(token: string): string {
+        return createHash("sha256").update(token).digest("hex")
     }
 }

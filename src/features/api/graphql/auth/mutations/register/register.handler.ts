@@ -17,6 +17,9 @@ import {
 import {
     RegisterResponseData,
 } from "./types"
+import {
+    HashService 
+} from "@modules/hash/hash.service"
 
 @CommandHandler(RegisterCommand)
 @Injectable()
@@ -25,6 +28,7 @@ export class RegisterHandler
     implements ICommandHandler<RegisterCommand, RegisterResponseData> {
     constructor(
         private readonly prisma: PrismaService,
+        private readonly hashService: HashService
     ) {
         super()
     }
@@ -36,11 +40,13 @@ export class RegisterHandler
             request,
         } = command.params
 
+        const hashedPassword = await this.hashService.hashPassword(request.password)
+
         const user = await this.prisma.user.create({
             data: {
                 username: request.username,
                 email: request.email,
-                password: request.password,
+                password: hashedPassword,
             },
         })
 
