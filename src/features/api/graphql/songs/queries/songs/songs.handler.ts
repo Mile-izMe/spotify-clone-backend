@@ -54,7 +54,7 @@ export class GetSongsHandler
         const where: Prisma.SongWhereInput = {
             ...buildSongWhere(filters.search),
             audioUrl: {
-                contains: "playlist.m3u8",
+                contains: "master.m3u8",
             },
         }
 

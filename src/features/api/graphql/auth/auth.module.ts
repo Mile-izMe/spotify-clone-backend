@@ -11,6 +11,9 @@ import {
     MutationsModule
 } from "./mutations"
 import {
+    JwtStrategy
+} from "@modules/common/strategies/jwt-strategy"
+import {
     JwtModule 
 } from "@nestjs/jwt"
 import {
@@ -31,6 +34,7 @@ import {
     ],
     providers: [
         AuthResolver,
+        JwtStrategy,
     ]
 })
 export class AuthModule extends AuthConfigurableModuleClass {}

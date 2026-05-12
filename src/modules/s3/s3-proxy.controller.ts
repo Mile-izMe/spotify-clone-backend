@@ -1,33 +1,36 @@
-import {
-    GetObjectCommand 
+import type {
+    GetObjectCommandInput
 } from "@aws-sdk/client-s3"
 import {
-    Controller, Get, HttpException, HttpStatus, Param, Req, Res 
-} from "@nestjs/common"
-import type {
-    Request, Response 
-} from "express"
-import type {
-    Readable 
-} from "node:stream"
-import type {
-    GetObjectCommandInput 
+    GetObjectCommand
 } from "@aws-sdk/client-s3"
 import {
-    Buffer 
-} from "node:buffer"
-import {
-    S3Provider 
-} from "./enums"
-import {
-    S3ClientService 
-} from "./s3-client.service"
+    envConfig
+} from "@modules/env"
 import {
     RedisService,
 } from "@modules/native"
 import {
-    envConfig 
-} from "@modules/env"
+    Controller, Get, HttpException, HttpStatus, Param, Req, Res
+} from "@nestjs/common"
+import type {
+    Request, Response
+} from "express"
+import {
+    Buffer
+} from "node:buffer"
+import {
+    posix
+} from "node:path"
+import type {
+    Readable
+} from "node:stream"
+import {
+    S3Provider
+} from "./enums"
+import {
+    S3ClientService
+} from "./s3-client.service"
 
 @Controller("s3/proxy")
 export class S3ProxyController {
@@ -59,10 +62,8 @@ export class S3ProxyController {
     }
 
     private async sendPlaylist(songId: string, playlistPath: string, res: Response) {
+        // "master.m3u8"
         const { client, bucket } = this.s3ClientService.getS3Resources(S3Provider.Minio)
-        // Try requested playlist path first. If not found and requested was
-        // "master.m3u8", fall back to "playlist.m3u8" which some pipelines
-        // or older workers may produce (see MinIO screenshot).
         const tryPaths = [playlistPath]
         if (playlistPath === "master.m3u8") {
             tryPaths.push("playlist.m3u8")
@@ -84,7 +85,7 @@ export class S3ProxyController {
                 const body = data.Body as Readable
                 const rawPlaylist = await this.readStreamAsUtf8(body)
                 const rewrittenPlaylist = this.rewritePlaylistForProxy(rawPlaylist,
-                    songId)
+                    songId, p)
 
                 res.setHeader("content-type",
                     "application/vnd.apple.mpegurl")
@@ -118,33 +119,23 @@ export class S3ProxyController {
             ? segPathParam.join("/")
             : segPathParam
         const key = `processed/songs/${songId}/${segPath}`
-
+        // Redis key for cached segments
+        const redisKey = `video-segment:${songId}:${segPath}`
+            
         try {
-            // Redis key for cached segments
-            const redisKey = `video-segment:${songId}:${segPath}`
+            // 1. Browser Cache Headers (OFFLINE/REPEAT)
+            // Immutable caching for segments since they are content-addressed (unique keys) and won't change once written. This allows repeat viewers to cache segments in the browser for a long time, improving performance and reducing load on the server and S3.
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable")
+            res.setHeader("accept-ranges", "bytes")
+            res.setHeader("content-type", "video/MP2T")
 
             // If client requested a Range, don't use cache (partial content)
             const range = req.headers.range as string | undefined
             if (!range) {
-                // try redis first
-                try {
-                    const cached = await this.redisService.get(redisKey)
-                    if (cached) {
-                        const buf = Buffer.from(cached,
-                            "base64")
-                        res.setHeader("content-length",
-                            buf.length.toString())
-                        res.setHeader("accept-ranges",
-                            "bytes")
-                        res.setHeader("content-type",
-                            "video/MP2T")
-                        return res.send(buf)
-                    }
-                } catch (redisErr) {
-                    // ignore redis errors and fallback to fetching from S3
-                    console.error("Redis read failed for key",
-                        redisKey,
-                        redisErr)
+                const cachedBuffer = await this.redisService.getBuffer(redisKey)
+                if (cachedBuffer) {
+                    res.setHeader("content-length", cachedBuffer.length.toString())
+                    return res.send(cachedBuffer)
                 }
             }
 
@@ -158,28 +149,12 @@ export class S3ProxyController {
                     : {
                     }),
             }
-
             const cmd = new GetObjectCommand(params)
             const data = await client.send(cmd)
 
             if (!data.Body) {
                 throw new Error("NoBody")
             }
-
-            // If response already contains content-length/content-range, keep them
-            if (data.ContentLength && !range) {
-                // only set when not partial
-                res.setHeader("content-length",
-                    data.ContentLength.toString())
-            }
-            if (data.ContentRange) {
-                res.setHeader("content-range",
-                    data.ContentRange)
-            }
-            res.setHeader("accept-ranges",
-                "bytes")
-            res.setHeader("content-type",
-                "video/MP2T")
 
             const body = data.Body as Readable
 
@@ -198,9 +173,9 @@ export class S3ProxyController {
             // store in redis as base64 with TTL (30 minutes default)
             const ttlSeconds = envConfig().redis.cache.ttlCacheStreamMs
             try {
-                await this.redisService.set(redisKey,
-                    buf.toString("base64"),
-                    ttlSeconds)
+                await this.redisService.setBuffer(redisKey, buf, ttlSeconds)
+                res.setHeader("content-length", buf.length.toString())
+                return res.send(buf)
             } catch (redisErr) {
                 console.error("Redis set failed for key",
                     redisKey,
@@ -226,44 +201,51 @@ export class S3ProxyController {
         return Buffer.concat(chunks).toString("utf8")
     }
 
-    private rewritePlaylistForProxy(playlist: string, songId: string): string {
-        const playlistBasePath = `/api/s3/proxy/playlist/${songId}/`
-        const segmentBasePath = `/api/s3/proxy/${songId}/segments/`
+    /**
+     * Rewrites playlist content to replace segment and nested playlist paths with proxied paths.
+     * Using Path-mapping Strategy
+     * @param playlist 
+     * @param songId 
+     * @param currentPath 
+     * @returns 
+     */
+    private rewritePlaylistForProxy(playlist: string, songId: string, relativeS3Path: string): string {
+        const PLAYLIST_ROOT = `/api/s3/proxy/playlist/${songId}/`
+        const SEGMENT_ROOT = `/api/s3/proxy/${songId}/segments/`
+
+        // Get folder contains current file (Ex: "128k/playlist.m3u8" -> "128k")
+        // Use posix.dirname to ensure forward slashes for URLs (/)
+        const currentFolder = posix.dirname(relativeS3Path)
+        const isRoot = currentFolder === "."
 
         return playlist
             .split(/\r?\n/)
             .map((line) => {
                 const trimmed = line.trim()
 
-                if (!trimmed) {
+                // Skip empty lines and comments (except #EXT-X-MAP:)
+                if (!trimmed || trimmed.startsWith("#") && !trimmed.startsWith("#EXT-X-MAP:")) {
                     return line
                 }
+
+                const resolver = (uri: string) => {
+                    if (this.isAbsoluteOrRootPath(uri)) return uri
+
+                    // Standard path: If at root, use filename; if in sub-folder, join the path
+                    const internalPath = isRoot ? uri : posix.join(currentFolder, uri)
+
+                    // Categorize resource for mapping into Controller Route
+                    const baseProxyPath = uri.endsWith(".m3u8") ? PLAYLIST_ROOT : SEGMENT_ROOT
+                    
+                    return posix.join(baseProxyPath, internalPath)
+                }
+                
 
                 if (trimmed.startsWith("#EXT-X-MAP:")) {
-                    return line.replace(/URI="([^"]+)"/,
-                        (_match, uri: string) => {
-                            if (this.isAbsoluteOrRootPath(uri)) {
-                                return `URI="${uri}"`
-                            }
-                            return uri.endsWith(".m3u8")
-                                ? `URI="${playlistBasePath}${uri}"`
-                                : `URI="${segmentBasePath}${uri}"`
-                        })
+                    return line.replace(/URI="([^"]+)"/, (_, uri) => `URI="${resolver(uri)}"`)
                 }
 
-                if (trimmed.startsWith("#")) {
-                    return line
-                }
-
-                if (this.isAbsoluteOrRootPath(trimmed)) {
-                    return line
-                }
-
-                if (trimmed.endsWith(".m3u8")) {
-                    return `${playlistBasePath}${trimmed}`
-                }
-
-                return `${segmentBasePath}${trimmed}`
+                return resolver(trimmed)
             })
             .join("\n")
     }

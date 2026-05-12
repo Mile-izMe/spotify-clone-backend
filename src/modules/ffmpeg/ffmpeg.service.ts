@@ -8,7 +8,8 @@ import * as fs from "fs"
 @Injectable()
 export class FfmpegService {
     private readonly logger = new Logger(FfmpegService.name)
-    private readonly audioBitrates = ["96k",
+    private readonly audioBitrates = ["64k",
+        "96k",
         "128k",
         "192k"]
 
@@ -95,7 +96,9 @@ export class FfmpegService {
                     "-c:a aac",
                     `-b:a ${bitrate}`,
                     "-vn",
-                    "-hls_time 10",
+                    "-ac 2",
+                    "-ar 44100",
+                    "-hls_time 6",
                     "-hls_playlist_type vod",
                     "-hls_list_size 0",
                     "-hls_segment_filename",

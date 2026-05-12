@@ -12,7 +12,7 @@ import {
 @ObjectType()
 export class SongSaveMetadataResponseData {
     @Field(() => SongItem)
-        song: SongItem
+        song: Omit<SongItem, "isEditable" | "createdAt" | "updatedAt">
 }
 
 @ObjectType()
