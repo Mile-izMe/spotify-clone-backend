@@ -45,6 +45,8 @@ export class GetSongsHandler
         query: SongsQuery,
     ): Promise<SongsResponseData> {
         const currentUserId = query.params.userId
+        console.log(currentUserId)
+        
 
         const filters = query.params.request.filters
         const limit = normalizeLimit(filters.limit)

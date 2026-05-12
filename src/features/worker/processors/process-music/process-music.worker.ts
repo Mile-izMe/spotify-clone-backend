@@ -14,9 +14,15 @@ import {
     envConfig,
 } from "@modules/env"
 import {
+    RequestContextService,
+} from "@modules/context/request-context.service"
+import {
     DayjsService,
     InjectSuperJson,
 } from "@modules/mixin"
+import {
+    WebsocketService,
+} from "@modules/websocket/websocket.service"
 import {
     Processor as Worker,
     WorkerHost,
@@ -64,6 +70,8 @@ export class ProcessMusicWorker extends WorkerHost {
         private readonly stepMappingService: ProcessMusicStepMappingService,
         private readonly dayjsService: DayjsService,
         private readonly prisma: PrismaService,
+        private readonly requestContext: RequestContextService,
+        private readonly websocketService: WebsocketService,
     ) {
         super()
     }
@@ -80,11 +88,15 @@ export class ProcessMusicWorker extends WorkerHost {
         let tempBaseDir
         try {
             // 1. Get & Update Job Status to PROCESSING
-            job = await this.jobActionService.getJob(
+            const initialJob = await this.jobActionService.getJob(
                 {
                     id: bullmqJob.id ?? "",
                 },
             )
+            if (!initialJob) {
+                throw new Error(`Job not found: ${bullmqJob.id ?? ""}`)
+            }
+            job = initialJob
             await this.jobActionService.processingJob({
                 job,
             })
@@ -143,27 +155,56 @@ export class ProcessMusicWorker extends WorkerHost {
                 },
             }
 
-            // 5. Execute steps sequentially
-            while (job.currentStep < job.maxStep) {
-                // refresh the job record
-                const syncedJob = await this.jobActionService.getJob(
-                    {
-                        id: job.id,
-                    },
-                )
-                // update the job record
-                job = syncedJob
-                // update the context
-                context.job = job
-                // process the step
-                await stepMap.get(syncedJob.currentStep)?.process(
-                    context
-                )
-            }
+            await this.requestContext.run(new Map<string, unknown>(), async () => {
+                this.requestContext.setUser({
+                    id: payload?.userId,
+                })
 
-            // 6. Complete the job
-            await this.jobActionService.completeJob({
-                job,
+                let currentJob = job
+                if (!currentJob) {
+                    throw new Error(`Job not found: ${bullmqJob.id ?? ""}`)
+                }
+
+                // 5. Execute steps sequentially
+                while (currentJob.currentStep < currentJob.maxStep) {
+                    // refresh the job record
+                    const syncedJob = await this.jobActionService.getJob(
+                        {
+                            id: currentJob.id,
+                        },
+                    )
+                    if (!syncedJob) {
+                        throw new Error(`Job not found: ${currentJob.id}`)
+                    }
+                    // update the job record
+                    currentJob = syncedJob
+                    // update the context
+                    context.job = currentJob
+                    // process the step
+                    await stepMap.get(syncedJob.currentStep)?.process(
+                        context
+                    )
+                }
+
+                // 6. Complete the job
+                await this.jobActionService.completeJob({
+                    job: currentJob,
+                })
+
+                const updatedSong = await this.prisma.song.findUnique({
+                    where: {
+                        id: payload?.songId ?? "",
+                    },
+                })
+
+                if (updatedSong) {
+                    await this.websocketService.broadcastToCluster({
+                        event: "songs.updated",
+                        data: updatedSong,
+                    })
+                }
+
+                job = currentJob
             })
 
             console.log("Successfully processed job",

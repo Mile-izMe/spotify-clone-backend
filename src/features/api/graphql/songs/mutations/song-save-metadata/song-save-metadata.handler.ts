@@ -48,6 +48,7 @@ export class SongSaveMetadataHandler
                 title: request.title,
                 thumbnailUrl: request.thumbnailUrl,
                 duration: request.duration,
+                createdBy: userId,
             },
         })
 

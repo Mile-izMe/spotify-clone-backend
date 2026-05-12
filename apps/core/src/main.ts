@@ -14,21 +14,11 @@ import compression from "compression"
 import {
     AppModule
 } from "./app.module"
-// import {
-//     setupCookie
-// } from "@modules/cookie"
 import {
     setupSwagger,
     SwaggerAuthenticationType
 } from "@modules/docs"
-// import {
-//     RedisIoAdapter 
-// } from "@modules/socketio"
-// import {
-//     createRedisKey, 
-//     RedisClient,
-//     RedisInstanceKey
-// } from "@modules/native"
+
 import {
     ContextLoggerService
 } from "@modules/logger"
@@ -59,16 +49,6 @@ const bootstrap = async () => {
         enableVersioning: true,
     })
     app.use(compression())
-    // const redis = app.get<RedisClient>(
-    //     createRedisKey(RedisInstanceKey.Adapter), 
-    //     {
-    //         strict: false 
-    //     }
-    // )
-    // const redisIoAdapter = new RedisIoAdapter(app)
-    // redisIoAdapter.setClient(redis)
-    // await redisIoAdapter.connect()
-    // app.useWebSocketAdapter(redisIoAdapter)
     await app.listen(envConfig().services.core.port)
 }
 bootstrap()

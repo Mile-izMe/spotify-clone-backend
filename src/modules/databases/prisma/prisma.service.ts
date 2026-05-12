@@ -17,11 +17,20 @@ import {
     PrismaArgsWithData 
 } from "./types"
 
+const AUDITED_MODELS = new Set([
+    "User",
+    "Role",
+    "Permission",
+    "RefreshToken",
+    "Song",
+    "Playlist",
+])
+
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
     // Expose the raw Prisma client for advanced use cases (type-safe)
-    readonly extendedClient
+    private _extendedClient
 
     constructor(private readonly requestContext: RequestContextService) {
         super({
@@ -30,12 +39,18 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             }),
         })
 
-        // Prisma middleware: automatically set createdBy / updatedBy / deletedBy if available in request context
-        this.extendedClient = this.$extends({
+        this._extendedClient = this.createExtendedClient()
+    }
+
+    private createExtendedClient() {
+        return this.$extends({
             query: {
                 $allModels: {
                     $allOperations: async ({
-                        operation, args, query 
+                        model,
+                        operation,
+                        args,
+                        query 
                     }) => {
                         if (operation === "findMany") {
                             // Exclude soft-deleted records by default
@@ -54,22 +69,23 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
                         const user = this.requestContext.getUser()
                         const username = user?.id
+                        const hasAuditFields = model ? AUDITED_MODELS.has(model) : false
 
-                        if (username) {
+                        if (username && hasAuditFields) {
                             const prismaArgs = args as PrismaArgsWithData
                             // CREATE
                             if (operation === "create" || operation === "createMany") {
                                 if (prismaArgs.data) {
                                     if (Array.isArray(prismaArgs.data)) {
-                                        // createMany: data là một mảng
+                                        // createMany: data is an array
                                         prismaArgs.data.forEach((item) => {
-                                            if ("createdBy" in item && !item.createdBy) item.createdBy = username
-                                            if ("updatedBy" in item && !item.updatedBy) item.updatedBy = username
+                                            item.createdBy = item.createdBy ?? username
+                                            item.updatedBy = item.updatedBy ?? username
                                         })
                                     } else {
-                                        // create: data là một object
-                                        if ("createdBy" in prismaArgs.data && !prismaArgs.data.createdBy) prismaArgs.data.createdBy = username
-                                        if ("updatedBy" in prismaArgs.data && !prismaArgs.data.updatedBy) prismaArgs.data.updatedBy = username
+                                        // create: data is an object
+                                        prismaArgs.data.createdBy = prismaArgs.data.createdBy ?? username
+                                        prismaArgs.data.updatedBy = prismaArgs.data.updatedBy ?? username
                                     }
                                 }
                             }
@@ -83,9 +99,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
                                 const updateData = operation === "upsert" ? prismaArgs.update : prismaArgs.data
                                 
                                 if (updateData && !Array.isArray(updateData)) {
-                                    if ("updatedBy" in updateData) {
-                                        updateData.updatedBy = username
-                                    }
+                                    updateData.updatedBy = username
                                 }
                             }
 
@@ -117,12 +131,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
                 }
             }
         })
-
-        // Override method of PrismaClient by extended instance
-        return this.extendedClient as unknown as PrismaService
     }
 
     async onModuleInit() {
+        Object.assign(this, this._extendedClient)
         await this.$connect()
     }
 

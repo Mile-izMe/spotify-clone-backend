@@ -3,15 +3,17 @@ import {
     GraphQLTransformInterceptor,
 } from "@modules/api"
 import {
-    Locale,
-} from "@modules/databases"
+    CurrentUser,
+    OptionalJwtAuthGuard,
+} from "@modules/common"
 import {
-    UseInterceptors
+    UseGuards,
+    UseInterceptors,
 } from "@nestjs/common"
 import {
     Args,
     Query,
-    Resolver
+    Resolver,
 } from "@nestjs/graphql"
 import {
     GetSongsService,
@@ -21,22 +23,20 @@ import {
     SongsResponse,
     SongsResponseData,
 } from "./queries/songs/types"
-import {
-    CurrentUser 
-} from "@modules/common"
 
 @Resolver()
+@UseGuards(OptionalJwtAuthGuard)
 export class SongsPublicResolver {
     constructor(
-        private readonly songsService: GetSongsService
+        private readonly songsService: GetSongsService,
     ) {}
 
     /**
     * Lists songs with cursor-first pagination and page fallback.
     */
     @GraphQLSuccessMessage({
-        [Locale.En]: "Songs fetched successfully",
-        [Locale.Vi]: "Lấy danh sách bài hát thành công",
+        en: "Songs fetched successfully",
+        vi: "Lấy danh sách bài hát thành công",
     })
     @UseInterceptors(GraphQLTransformInterceptor)
     @Query(
