@@ -9,6 +9,8 @@ import {
 } from "@modules/env"
 import {
     RedisService,
+    RedisKeyPrefix,
+    createNamespacedRedisKey,
 } from "@modules/native"
 import {
     Controller, Get, HttpException, HttpStatus, Param, Req, Res
@@ -120,7 +122,11 @@ export class S3ProxyController {
             : segPathParam
         const key = `processed/songs/${songId}/${segPath}`
         // Redis key for cached segments
-        const redisKey = `video-segment:${songId}:${segPath}`
+        const redisKey = createNamespacedRedisKey(
+            RedisKeyPrefix.VideoSegment,
+            songId,
+            segPath,
+        )
             
         try {
             // 1. Browser Cache Headers (OFFLINE/REPEAT)

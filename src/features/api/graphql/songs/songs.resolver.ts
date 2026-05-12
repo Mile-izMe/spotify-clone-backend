@@ -1,6 +1,7 @@
 import {
     CheckPermissions,
     CurrentUser,
+    PermissionName,
     JwtAuthGuard, PermissionsGuard
 } from "@modules/common"
 import {
@@ -69,7 +70,7 @@ export class SongsResolver {
     /**
      * Saves song metadata and the uploaded file key into database.
      */
-    @CheckPermissions("song:create")
+    @CheckPermissions(PermissionName.SongCreate)
     @Mutation(
         () => SongSaveMetadataResponse,
         {
@@ -102,7 +103,7 @@ export class SongsResolver {
     /**
      * Updates song fields and emits a songs.updated event.
      */
-    @CheckPermissions("song:update")
+    @CheckPermissions(PermissionName.SongUpdate)
     @Mutation(
         () => SongUpdateResponse,
         {
