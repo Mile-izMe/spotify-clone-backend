@@ -29,6 +29,7 @@ export class ElasticsearchQueryBuilder {
                     query: search,
                     fields: searchFields,
                     fuzziness: "AUTO",
+                    operator: "and",
                 },
             })
         }

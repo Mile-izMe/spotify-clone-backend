@@ -40,6 +40,7 @@ export class SongsResolver {
     /**
      * Creates a presigned upload URL for song audio.
      */
+    @CheckPermissions(PermissionName.SongCreate)
     @Mutation(
         () => SongPresignUrlResponse,
         {

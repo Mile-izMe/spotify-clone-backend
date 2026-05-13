@@ -19,6 +19,9 @@ import {
 import {
     SearchParam
 } from "./types"
+import { 
+    ElasticsearchQueryBuilder 
+} from "./utils"
 
 /**
  * The service for the Elasticsearch.
@@ -33,12 +36,28 @@ export class ElasticsearchService implements OnModuleInit {
         "User",
         "Playlist",
     ]
+
     constructor(
     @InjectElasticsearch()
     public readonly client: Client,
     private readonly asyncService: AsyncService,
     private readonly readinessWatcherFactoryService: ReadinessWatcherFactoryService,
     ) {}
+
+    /**
+     * On module initialization, ensure the index exists.
+     */
+    async onModuleInit() {
+        this.readinessWatcherFactoryService.createWatcher(
+            ElasticsearchService.name
+        )
+        // ensure the indices exist
+        await this.asyncService.allIgnoreError(
+            this.indices.map(entity => {
+                return this.setupEntityIndex(this.indicateName(entity))
+            }),
+        )
+    }
 
     /**
      * Indicate the index name.
@@ -50,51 +69,51 @@ export class ElasticsearchService implements OnModuleInit {
     }
 
     /**
-     * On application bootstrap, ensure the index exists.
+     * Setup the index for the entity.
+     * @param entity 
+     * @returns 
      */
-    async onModuleInit() {
-        this.readinessWatcherFactoryService.createWatcher(
-            ElasticsearchService.name
-        )
-        // ensure the indices exist
-        await this.asyncService.allIgnoreError(
-            this.indices.map(index => {
-                return this.ensureIndexExists(this.indicateName(index))
-            }),
-        )
-    }
-
-    /**
-   * Ensure the index exists.
-   */
-    async ensureIndexExists(
-        index: string,
-        create?: Omit<Parameters<Client["indices"]["create"]>[0], "index">,
-    ): Promise<void> {
+    private async setupEntityIndex(entity: string): Promise<void> {
+        const indexName = this.indicateName(entity)
         const existsResult = await this.client.indices.exists({
-            index,
+            index: indexName 
         })
-        const exists =
-      typeof existsResult === "boolean"
-          ? existsResult
-          : (
-            existsResult as {
-              body: boolean;
-            }
-          ).body
+        const exists = typeof existsResult === "boolean" ? existsResult : (existsResult as any).body
 
         if (exists) return
 
+        // Analyzer Setting support Vietnamese (asciifolding) & lowercase
+        const settings = {
+            analysis: {
+                analyzer: {
+                    vi_analyzer: {
+                        type: "custom",
+                        tokenizer: "standard",
+                        filter: ["lowercase",
+                            "asciifolding"]
+                    }
+                }
+            }
+        }
+
+        // Get mappings from Config
+        const mappings = configMap[entity]?.mappings || {
+        }
+
+        // Tạo Index với Settings và Mappings
         await this.client.indices.create({
-            index,
-            ...(create ?? {
+            index: indexName,
+            settings: settings as any,
+            ...(mappings ? {
+                mappings 
+            } : {
             }),
         })
     }
 
     /**
-   * Index the entity.
-   */
+     * Index the entity.
+     */
     async indexEntity<T extends Record<string, any>>(
         entityName: string,
         data: T,
@@ -127,24 +146,31 @@ export class ElasticsearchService implements OnModuleInit {
         })
     }
 
+
     async search<T>(
         entityName: string, 
-        params: SearchParam
+        params: SearchParam & { keyword?: string }
     ) {
+        const entityConfig = configMap[entityName]
+
+        // Use builder to build query
+        const esQuery = ElasticsearchQueryBuilder.buildSearchQuery({
+            search: params.keyword,
+            searchFields: entityConfig.searchFields,
+            filters: params.query ? [params.query] : [],
+        })
+
+        // Execute search query
         const response = await this.client.search({
             index: this.indicateName(entityName),
             from: params.from,
             size: params.size,
-            query: params.query || {
-                match_all: {
-                } 
-            },
+            query: esQuery,
             sort: params.sort,
         })
 
         const total = response.hits.total
         const count = typeof total === "number" ? total : total?.value || 0
-
         const data = response.hits.hits.map((hit) => hit._source as T)
     
         return {

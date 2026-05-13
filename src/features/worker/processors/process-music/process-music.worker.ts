@@ -46,6 +46,9 @@ import {
 import type {
     ExtendedProcessMusicContext,
 } from "./types"
+import {
+    ElasticsearchService 
+} from "@modules/elasticsearch/elasticsearch.service"
 
 type ProcessMusicJobData = ProcessMusicPayload | string
 
@@ -72,6 +75,7 @@ export class ProcessMusicWorker extends WorkerHost {
         private readonly prisma: PrismaService,
         private readonly requestContext: RequestContextService,
         private readonly websocketService: WebsocketService,
+        private readonly elasticsearchService: ElasticsearchService
     ) {
         super()
     }
@@ -197,11 +201,28 @@ export class ProcessMusicWorker extends WorkerHost {
                     },
                 })
 
+                // 7. Index to Elasticsearch & Broadcast via Websocket (Not affect the main flow, can be done async without awaiting)
                 if (updatedSong) {
-                    await this.websocketService.broadcastToCluster({
+                    this.elasticsearchService.indexEntity("Song", updatedSong)
+                        .then(() => console.log(`[ES] Indexed song: ${updatedSong.id}`))
+                        .catch((error) => {
+                            console.error("[ES] Failed to index song async", {
+                                songId: updatedSong.id,
+                                error: error instanceof Error ? error.message : String(error),
+                            })
+                        })
+
+                    this.websocketService.broadcastToCluster({
                         event: "songs.updated",
                         data: updatedSong,
                     })
+                        .then(() => console.log(`[WS] Broadcasted song update: ${updatedSong.id}`))
+                        .catch((error) => {
+                            console.error("[WS] Failed to broadcast song async", {
+                                songId: updatedSong.id,
+                                error: error instanceof Error ? error.message : String(error),
+                            })
+                        })
                 }
 
                 job = currentJob

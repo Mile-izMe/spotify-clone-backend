@@ -33,6 +33,7 @@ export default defineConfig([
                     ImportDeclaration: "always",
                 },
             ],
+            "typescript-eslint/no-explicit-any": "off",
             "function-call-argument-newline": ["off",
                 "always"],
             indent: ["error",
