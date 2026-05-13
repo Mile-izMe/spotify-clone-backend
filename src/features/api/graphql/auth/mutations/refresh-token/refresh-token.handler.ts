@@ -121,6 +121,7 @@ export class RefreshTokenHandler
             // 4. Generate new token pair (rotate)
             const result = await this.authService.generateTokenPair(
                 user.id,
+                user.username,
                 user.roles,
                 user.permissions,
                 request.deviceId,

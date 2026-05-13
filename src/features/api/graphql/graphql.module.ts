@@ -11,6 +11,9 @@ import {
     SongsModule
 } from "./songs"
 import {
+    PlaylistsModule,
+} from "./playlists"
+import {
     UserModule
 } from "./user"
 import {
@@ -23,6 +26,7 @@ import {
 @Module({
     imports: [
         SongsModule,
+        PlaylistsModule,
         UserModule,
         AuthModule,
         GlobalSearchModule,
