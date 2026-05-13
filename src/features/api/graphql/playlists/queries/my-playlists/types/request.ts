@@ -1,7 +1,6 @@
 import {
     PaginationPageFilters,
     SortInput,
-    SortOrder,
 } from "@modules/api"
 import {
     createEnumType,
@@ -66,16 +65,11 @@ export class PlaylistsRequestPaginationFilters extends PaginationPageFilters<Pla
     @Field(
         () => [PlaylistsRequestSort],
         {
-            defaultValue: [
-                {
-                    by: PlaylistsSortBy.CreatedAt,
-                    order: SortOrder.Desc,
-                },
-            ],
+            nullable: true,
             description: "Sorts",
         },
     )
-        sorts: Array<PlaylistsRequestSort>
+        sorts?: Array<PlaylistsRequestSort>
 }
 
 @InputType({
