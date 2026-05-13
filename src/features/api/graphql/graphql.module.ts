@@ -13,6 +13,9 @@ import {
 import {
     UserModule
 } from "./user"
+import {
+    GlobalSearchModule 
+} from "./global-search"
 
 /**
  * Module for the GraphQL.
@@ -22,6 +25,7 @@ import {
         SongsModule,
         UserModule,
         AuthModule,
+        GlobalSearchModule,
     ],
 })
 export class GraphQLModule extends GraphqlConfigurableModuleClass {}
