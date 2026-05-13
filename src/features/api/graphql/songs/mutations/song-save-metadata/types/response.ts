@@ -7,7 +7,7 @@ import {
 } from "@nestjs/graphql"
 import {
     SongItem,
-} from "../../../queries/songs/types"
+} from "../../../types"
 
 @ObjectType()
 export class SongSaveMetadataResponseData {
