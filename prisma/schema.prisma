@@ -164,6 +164,13 @@ model PlaylistSong {
   song       Song     @relation(fields: [songId], references: [id])
   songId     String   @map("song_id")
 
+  createdAt DateTime @map("created_at") @default(now())
+  createdBy String?  @map("created_by")
+  updatedAt DateTime @map("updated_at") @default(now())
+  updatedBy String?  @map("updated_by")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?  @map("deleted_by")
+
   @@id([playlistId, songId])
   @@map("playlist_songs")
 }

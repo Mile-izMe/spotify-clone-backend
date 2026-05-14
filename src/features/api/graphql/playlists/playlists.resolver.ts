@@ -35,6 +35,12 @@ import {
     GetMyPlaylistsResponseData,
     GetMyPlaylistsService,
 } from "./queries/my-playlists"
+import {
+    GetPlaylistSongsRequest,
+    PlaylistSongsResponse,
+    PlaylistSongsResponseData,
+    PlaylistSongsService,
+} from "./queries/playlist-songs"
 
 @Resolver()
 @UseGuards(JwtAuthGuard)
@@ -42,6 +48,7 @@ export class PlaylistsResolver {
     constructor(
         private readonly playlistCreateService: PlaylistCreateService,
         private readonly getMyPlaylistsService: GetMyPlaylistsService,
+        private readonly playlistSongsService: PlaylistSongsService,
         private readonly playlistAddSongService: PlaylistAddSongService,
     ) {}
 
@@ -68,6 +75,34 @@ export class PlaylistsResolver {
         @CurrentUser("userId") userId: string,
     ): Promise<GetMyPlaylistsResponseData> {
         return this.getMyPlaylistsService.execute({
+            request,
+            userId,
+        })
+    }
+
+    @GraphQLSuccessMessage({
+        [Locale.En]: "Playlist songs fetched successfully",
+        [Locale.Vi]: "Lấy chi tiết bài hát trong playlist thành công",
+    })
+    @UseInterceptors(GraphQLTransformInterceptor)
+    @Query(
+        () => PlaylistSongsResponse,
+        {
+            name: "playlistSongs",
+            description: "Lists the songs in a playlist owned by the current user.",
+        },
+    )
+    async playlistSongs(
+        @Args(
+            "request",
+            {
+                description: "Playlist identifier.",
+            },
+        )
+            request: GetPlaylistSongsRequest,
+        @CurrentUser("userId") userId: string,
+    ): Promise<PlaylistSongsResponseData> {
+        return this.playlistSongsService.execute({
             request,
             userId,
         })
