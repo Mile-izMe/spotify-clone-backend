@@ -66,6 +66,8 @@ model Role {
   createdBy String?  @map("created_by")
   updatedAt DateTime @map("updated_at") @default(now())
   updatedBy String?  @map("updated_by")
+  deletedAt    DateTime?  @map("deleted_at")
+  deletedBy    String?    @map("deleted_by")
 
   @@map("roles")
 }
@@ -79,6 +81,8 @@ model Permission {
   createdBy String?  @map("created_by")
   updatedAt DateTime @map("updated_at") @default(now())
   updatedBy String?  @map("updated_by")
+  deletedAt    DateTime?  @map("deleted_at")
+  deletedBy    String?    @map("deleted_by")
 
   @@map("permissions")
 }

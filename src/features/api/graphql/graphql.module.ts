@@ -19,6 +19,9 @@ import {
 import {
     GlobalSearchModule 
 } from "./global-search"
+import {
+    PermissionsModule
+} from "./permissions"
 
 /**
  * Module for the GraphQL.
@@ -28,6 +31,7 @@ import {
         SongsModule,
         PlaylistsModule,
         UserModule,
+        PermissionsModule,
         AuthModule,
         GlobalSearchModule,
     ],
