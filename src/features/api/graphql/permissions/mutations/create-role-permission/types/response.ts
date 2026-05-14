@@ -11,8 +11,8 @@ import {
 
 @ObjectType()
 export class CreateRolePermissionResponseDataObject {
-    @Field(() => RolePermissionItem)
-        rolePermission: RolePermissionItem
+    @Field(() => [RolePermissionItem])
+        rolePermissions: Array<RolePermissionItem>
 }
 
 @ObjectType()
@@ -24,5 +24,5 @@ export class CreateRolePermissionResponse extends AbstractGraphQLResponse {
 }
 
 export interface CreateRolePermissionResponseData {
-    rolePermission: RolePermissionItem
+    rolePermissions: Array<RolePermissionItem>
 }

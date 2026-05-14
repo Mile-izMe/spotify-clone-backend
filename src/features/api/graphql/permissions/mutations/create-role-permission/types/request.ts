@@ -4,16 +4,16 @@ import {
 } from "@nestjs/graphql"
 
 @InputType({
-    description: "Request for assigning a permission to a role.",
+    description: "Request for assigning permissions to one or many roles.",
 })
 export class CreateRolePermissionRequest {
-    @Field(() => String, {
-        description: "Role identifier.",
+    @Field(() => [String], {
+        description: "Role identifiers.",
     })
-        roleId: string
+        roleIds: Array<string>
 
-    @Field(() => String, {
-        description: "Permission identifier.",
+    @Field(() => [String], {
+        description: "Permission identifiers.",
     })
-        permissionId: string
+        permissionIds: Array<string>
 }

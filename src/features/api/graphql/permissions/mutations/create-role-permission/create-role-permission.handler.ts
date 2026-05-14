@@ -5,6 +5,7 @@ import {
     PrismaService,
 } from "@modules/databases"
 import {
+    BadRequestException,
     Injectable,
 } from "@nestjs/common"
 import {
@@ -39,19 +40,54 @@ export class CreateRolePermissionHandler
             request,
         } = command.params
 
-        const rolePermission = await this.prisma.rolePermission.create({
-            data: {
-                roleId: request.roleId,
-                permissionId: request.permissionId,
+        const roleIds = Array.from(new Set(request.roleIds ?? []))
+        const permissionIds = Array.from(new Set(request.permissionIds ?? []))
+
+        if (!roleIds.length) {
+            throw new BadRequestException("roleIds must not be empty")
+        }
+
+        if (!permissionIds.length) {
+            throw new BadRequestException("permissionIds must not be empty")
+        }
+
+        const data = roleIds.flatMap((roleId) => {
+            return permissionIds.map((permissionId) => ({
+                roleId,
+                permissionId,
+            }))
+        })
+
+        await this.prisma.rolePermission.createMany({
+            data,
+            skipDuplicates: true,
+        })
+
+        const rolePermissions = await this.prisma.rolePermission.findMany({
+            where: {
+                roleId: {
+                    in: roleIds,
+                },
+                permissionId: {
+                    in: permissionIds,
+                },
             },
             include: {
                 role: true,
                 permission: true,
             },
+            orderBy: [
+                {
+                    roleId: "asc",
+                },
+                {
+                    permissionId: "asc",
+                },
+            ],
         })
 
         return {
-            rolePermission: toRolePermissionItem(rolePermission),
+            rolePermissions: rolePermissions.map(toRolePermissionItem),
         }
     }
 }

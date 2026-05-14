@@ -36,6 +36,16 @@ import {
     GetRolesService,
 } from "./queries/get-roles"
 import {
+    GetPermissionsResponse,
+    GetPermissionsResponseData,
+    GetPermissionsService,
+} from "./queries/get-permissions"
+import {
+    GetPermissionsByRoleResponse,
+    GetPermissionsByRoleResponseData,
+    GetPermissionsByRoleService,
+} from "./queries/get-permissions-by-role"
+import {
     GetUserPermissionsResponse,
     GetUserPermissionsResponseData,
     GetUserPermissionsService,
@@ -49,6 +59,8 @@ export class PermissionsResolver {
         private readonly createRolePermissionService: CreateRolePermissionService,
         private readonly getRolesService: GetRolesService,
         private readonly getUserPermissionsService: GetUserPermissionsService,
+        private readonly getPermissionsService: GetPermissionsService,
+        private readonly getPermissionsByRoleService: GetPermissionsByRoleService,
     ) {}
 
     @GraphQLSuccessMessage({
@@ -65,6 +77,44 @@ export class PermissionsResolver {
     )
     async roles(): Promise<GetRolesResponseData> {
         return this.getRolesService.execute()
+    }
+
+    @GraphQLSuccessMessage({
+        [Locale.En]: "Permissions fetched successfully",
+        [Locale.Vi]: "Lấy danh sách permissions thành công",
+    })
+    @UseInterceptors(GraphQLTransformInterceptor)
+    @Query(
+        () => GetPermissionsResponse,
+        {
+            name: "permissions",
+            description: "Lists all permissions available in the system.",
+        },
+    )
+    async permissions(): Promise<GetPermissionsResponseData> {
+        return this.getPermissionsService.execute()
+    }
+
+    @GraphQLSuccessMessage({
+        [Locale.En]: "Permissions by role fetched successfully",
+        [Locale.Vi]: "Lấy danh sách permissions theo role thành công",
+    })
+    @UseInterceptors(GraphQLTransformInterceptor)
+    @Query(
+        () => GetPermissionsByRoleResponse,
+        {
+            name: "permissionsByRoleId",
+            description: "Lists all permissions assigned to a role.",
+        },
+    )
+    async permissionsByRoleId(
+        @Args("roleId", {
+            type: () => String,
+            description: "Role identifier.",
+        })
+            roleId: string,
+    ): Promise<GetPermissionsByRoleResponseData> {
+        return this.getPermissionsByRoleService.execute(roleId)
     }
 
     @GraphQLSuccessMessage({
@@ -116,7 +166,7 @@ export class PermissionsResolver {
         () => CreateRolePermissionResponse,
         {
             name: "createRolePermission",
-            description: "Assigns a permission to a role.",
+            description: "Assigns one or many permissions to one or many roles.",
         },
     )
     async createRolePermission(
@@ -136,7 +186,7 @@ export class PermissionsResolver {
 
         return {
             success: true,
-            message: "Permission assigned to role successfully",
+            message: "Permissions assigned to roles successfully",
             data,
         }
     }
